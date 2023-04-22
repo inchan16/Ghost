@@ -3,6 +3,8 @@ const debug = require('@tryghost/debug')('models:base:model-events');
 const ObjectId = require('bson-objectid').default;
 
 const schema = require('../../../data/schema');
+const logging = require('@tryghost/logging');
+const captureStacktrace = require('../../../../stacktrace');
 
 // This wires up our model event system
 const events = require('../../../lib/common/events');
@@ -115,6 +117,11 @@ module.exports = function (Bookshelf) {
      * This avoids collisions and possible content override cases.
      */
     onFetching: function onFetching(model, columns, options) {
+      logging.debug(
+        'fetch',
+        this.tableName,
+        JSON.stringify(captureStacktrace(), null, 2)
+      );
       if (options.forUpdate && options.transacting) {
         options.query.forUpdate();
       }
@@ -127,6 +134,11 @@ module.exports = function (Bookshelf) {
       columns,
       options
     ) {
+      logging.info(
+        'fetch_list',
+        this.tableName,
+        JSON.stringify(captureStacktrace(), null, 2)
+      );
       if (options.forUpdate && options.transacting) {
         options.query.forUpdate();
       }
@@ -146,6 +158,12 @@ module.exports = function (Bookshelf) {
      * Exceptions: internal context or importing
      */
     onCreating: function onCreating(model, attr, options) {
+      logging.info(
+        'create',
+        this.tableName,
+        JSON.stringify(captureStacktrace(), null, 2)
+      );
+
       if (
         Object.prototype.hasOwnProperty.call(
           schema.tables[this.tableName],
@@ -239,6 +257,12 @@ module.exports = function (Bookshelf) {
      * @deprecated: x_by fields (https://github.com/TryGhost/Ghost/issues/10286)
      */
     onUpdating: function onUpdating(model, attr, options) {
+      logging.info(
+        'update',
+        this.tableName,
+        JSON.stringify(captureStacktrace(), null, 2)
+      );
+
       if (this.relationships) {
         model.changed = _.omit(model.changed, this.relationships);
       }
@@ -321,6 +345,11 @@ module.exports = function (Bookshelf) {
     onDestroying() {},
 
     onDestroyed(model, options) {
+      logging.info(
+        'destroy',
+        this.tableName,
+        JSON.stringify(captureStacktrace(), null, 2)
+      );
       if (!model._changed) {
         model._changed = {};
       }

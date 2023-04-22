@@ -20,7 +20,7 @@ let commands = [];
 const COMMAND_GHOST = {
   name: 'ghost',
   // Note: if this isn't working for you, please use Node 18 and above
-  command: 'node --watch index.js',
+  command: 'node --watch --stack_trace_limit=10000 -r trace index.js',
   cwd: path.resolve(__dirname, '../ghost/core'),
   prefixColor: 'blue',
   env: {},
