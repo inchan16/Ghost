@@ -1,14 +1,14 @@
 import PostsRoute from './posts';
-import {inject as service} from '@ember/service';
+import { inject as service } from '@ember/service';
 
 export default class PagesRoute extends PostsRoute {
-    @service feature;
+  @service feature;
 
-    modelName = 'page';
+  modelName = 'page';
 
-    buildRouteInfoMetadata() {
-        return {
-            titleToken: 'Pages'
-        };
-    }
+  buildRouteInfoMetadata() {
+    return {
+      titleToken: 'Pages',
+    };
+  }
 }

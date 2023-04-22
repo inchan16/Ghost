@@ -3,7 +3,7 @@ const tpl = require('@tryghost/tpl');
 const errors = require('@tryghost/errors');
 
 const messages = {
-    resourceNotFound: '{resource} not found.'
+  resourceNotFound: '{resource} not found.',
 };
 
 /**
@@ -12,15 +12,19 @@ const messages = {
  * @return {Promise}
  */
 const getSchedulerIntegration = function () {
-    return models.Integration.findOne({slug: 'ghost-scheduler'}, {withRelated: 'api_keys'})
-        .then((integration) => {
-            if (!integration) {
-                throw new errors.NotFoundError({
-                    message: tpl(messages.resourceNotFound, {resource: 'Integration'})
-                });
-            }
-            return integration.toJSON();
-        });
+  return models.Integration.findOne(
+    { slug: 'ghost-scheduler' },
+    { withRelated: 'api_keys' }
+  ).then((integration) => {
+    if (!integration) {
+      throw new errors.NotFoundError({
+        message: tpl(messages.resourceNotFound, {
+          resource: 'Integration',
+        }),
+      });
+    }
+    return integration.toJSON();
+  });
 };
 
 module.exports = getSchedulerIntegration;

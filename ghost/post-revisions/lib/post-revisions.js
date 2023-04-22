@@ -17,97 +17,94 @@
  */
 
 class PostRevisions {
-    /**
-     * @param {object} deps
-     * @param {object} deps.config
-     * @param {number} deps.config.max_revisions
-     * @param {object} deps.model
-     */
-    constructor(deps) {
-        this.config = deps.config;
-        this.model = deps.model;
+  /**
+   * @param {object} deps
+   * @param {object} deps.config
+   * @param {number} deps.config.max_revisions
+   * @param {object} deps.model
+   */
+  constructor(deps) {
+    this.config = deps.config;
+    this.model = deps.model;
+  }
+
+  /**
+   * @param {PostLike} previous
+   * @param {PostLike} current
+   * @param {Revision[]} revisions
+   * @returns {boolean}
+   */
+  shouldGenerateRevision(previous, current, revisions) {
+    if (!previous) {
+      return false;
+    }
+    if (revisions.length === 0) {
+      return true;
+    }
+    return previous.html !== current.html || previous.title !== current.title;
+  }
+
+  /**
+   * @param {PostLike} previous
+   * @param {PostLike} current
+   * @param {Revision[]} revisions
+   * @returns {Promise<Revision[]>}
+   */
+  async getRevisions(previous, current, revisions) {
+    if (!this.shouldGenerateRevision(previous, current, revisions)) {
+      return revisions;
     }
 
-    /**
-     * @param {PostLike} previous
-     * @param {PostLike} current
-     * @param {Revision[]} revisions
-     * @returns {boolean}
-     */
-    shouldGenerateRevision(previous, current, revisions) {
-        if (!previous) {
-            return false;
-        }
-        if (revisions.length === 0) {
-            return true;
-        }
-        return previous.html !== current.html || previous.title !== current.title;
+    const currentRevision = this.convertPostLikeToRevision(current);
+
+    if (revisions.length === 0) {
+      return [currentRevision];
     }
 
-    /**
-     * @param {PostLike} previous
-     * @param {PostLike} current
-     * @param {Revision[]} revisions
-     * @returns {Promise<Revision[]>}
-     */
-    async getRevisions(previous, current, revisions) {
-        if (!this.shouldGenerateRevision(previous, current, revisions)) {
-            return revisions;
-        }
+    return [currentRevision, ...revisions].slice(0, this.config.max_revisions);
+  }
 
-        const currentRevision = this.convertPostLikeToRevision(current);
+  /**
+   * @param {PostLike} input
+   * @returns {Revision}
+   */
+  convertPostLikeToRevision(input, offset = 0) {
+    return {
+      post_id: input.id,
+      lexical: input.lexical,
+      created_at_ts: Date.now() - offset,
+      author_id: input.author_id,
+      title: input.title,
+    };
+  }
 
-        if (revisions.length === 0) {
-            return [
-                currentRevision
-            ];
-        }
+  /**
+   * @param {string} authorId
+   * @param {object} options
+   * @param {object} options.transacting
+   */
+  async removeAuthorFromRevisions(authorId, options) {
+    const revisions = await this.model.findAll({
+      filter: `author_id:${authorId}`,
+      columns: ['id'],
+      transacting: options.transacting,
+    });
 
-        return [currentRevision, ...revisions].slice(0, this.config.max_revisions);
+    const revisionIds = revisions.toJSON().map(({ id }) => id);
+
+    if (revisionIds.length === 0) {
+      return;
     }
 
-    /**
-     * @param {PostLike} input
-     * @returns {Revision}
-     */
-    convertPostLikeToRevision(input, offset = 0) {
-        return {
-            post_id: input.id,
-            lexical: input.lexical,
-            created_at_ts: Date.now() - offset,
-            author_id: input.author_id,
-            title: input.title
-        };
-    }
-
-    /**
-     * @param {string} authorId
-     * @param {object} options
-     * @param {object} options.transacting
-     */
-    async removeAuthorFromRevisions(authorId, options) {
-        const revisions = await this.model.findAll({
-            filter: `author_id:${authorId}`,
-            columns: ['id'],
-            transacting: options.transacting
-        });
-
-        const revisionIds = revisions.toJSON()
-            .map(({id}) => id);
-
-        if (revisionIds.length === 0) {
-            return;
-        }
-
-        await this.model.bulkEdit(revisionIds, 'post_revisions', {
-            data: {
-                author_id: null
-            },
-            column: 'id',
-            transacting: options.transacting,
-            throwErrors: true
-        });
-    }
+    await this.model.bulkEdit(revisionIds, 'post_revisions', {
+      data: {
+        author_id: null,
+      },
+      column: 'id',
+      transacting: options.transacting,
+      throwErrors: true,
+    });
+  }
 }
 
 module.exports = PostRevisions;

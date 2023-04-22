@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-card-image/selector-tenor/gif';
+export { default } from 'koenig-editor/components/koenig-card-image/selector-tenor/gif';

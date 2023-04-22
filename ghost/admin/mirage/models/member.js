@@ -1,8 +1,8 @@
-import {Model, hasMany} from 'miragejs';
+import { Model, hasMany } from 'miragejs';
 
 export default Model.extend({
-    labels: hasMany(),
-    tiers: hasMany(),
-    newsletters: hasMany(),
-    subscriptions: hasMany()
+  labels: hasMany(),
+  tiers: hasMany(),
+  newsletters: hasMany(),
+  subscriptions: hasMany(),
 });

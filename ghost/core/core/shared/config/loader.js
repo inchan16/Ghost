@@ -12,65 +12,71 @@ const env = process.env.NODE_ENV || 'development';
  * @returns {Nconf.Provider & urlHelpers.BoundHelpers & helpers.ConfigHelpers}
  */
 function loadNconf(options) {
-    debug('config start');
-    options = options || {};
+  debug('config start');
+  options = options || {};
 
-    const baseConfigPath = options.baseConfigPath || __dirname;
-    const customConfigPath = options.customConfigPath || process.cwd();
-    const nconf = new Nconf.Provider();
+  const baseConfigPath = options.baseConfigPath || __dirname;
+  const customConfigPath = options.customConfigPath || process.cwd();
+  const nconf = new Nconf.Provider();
 
-    // ## Load Config
+  // ## Load Config
 
-    // no channel can override the overrides
-    nconf.file('overrides', path.join(baseConfigPath, 'overrides.json'));
+  // no channel can override the overrides
+  nconf.file('overrides', path.join(baseConfigPath, 'overrides.json'));
 
-    // command line arguments take precedence, then environment variables
-    nconf.argv();
-    nconf.env({separator: '__', parseValues: true});
+  // command line arguments take precedence, then environment variables
+  nconf.argv();
+  nconf.env({ separator: '__', parseValues: true });
 
-    // Now load various config json files
-    nconf.file('custom-env', path.join(customConfigPath, 'config.' + env + '.json'));
-    if (!env.startsWith('testing')) {
-        nconf.file('local-env', path.join(customConfigPath, 'config.local.json'));
-    }
-    nconf.file('default-env', path.join(baseConfigPath, 'env', 'config.' + env + '.json'));
+  // Now load various config json files
+  nconf.file(
+    'custom-env',
+    path.join(customConfigPath, 'config.' + env + '.json')
+  );
+  if (!env.startsWith('testing')) {
+    nconf.file('local-env', path.join(customConfigPath, 'config.local.json'));
+  }
+  nconf.file(
+    'default-env',
+    path.join(baseConfigPath, 'env', 'config.' + env + '.json')
+  );
 
-    // Finally, we load defaults, if nothing else has a value this will
-    nconf.file('defaults', path.join(baseConfigPath, 'defaults.json'));
+  // Finally, we load defaults, if nothing else has a value this will
+  nconf.file('defaults', path.join(baseConfigPath, 'defaults.json'));
 
-    // ## Config Methods
+  // ## Config Methods
 
-    // Expose dynamic utility methods
-    urlHelpers.bindAll(nconf);
-    helpers.bindAll(nconf);
+  // Expose dynamic utility methods
+  urlHelpers.bindAll(nconf);
+  helpers.bindAll(nconf);
 
-    // ## Sanitization
+  // ## Sanitization
 
-    // transform all relative paths to absolute paths
-    localUtils.makePathsAbsolute(nconf, nconf.get('paths'), 'paths');
+  // transform all relative paths to absolute paths
+  localUtils.makePathsAbsolute(nconf, nconf.get('paths'), 'paths');
 
-    // transform sqlite filename path for Ghost-CLI
-    localUtils.sanitizeDatabaseProperties(nconf);
+  // transform sqlite filename path for Ghost-CLI
+  localUtils.sanitizeDatabaseProperties(nconf);
 
-    // Check if the URL in config has a protocol
-    localUtils.checkUrlProtocol(nconf.get('url'));
+  // Check if the URL in config has a protocol
+  localUtils.checkUrlProtocol(nconf.get('url'));
 
-    // Ensure that the content path exists
-    localUtils.doesContentPathExist(nconf.get('paths:contentPath'));
+  // Ensure that the content path exists
+  localUtils.doesContentPathExist(nconf.get('paths:contentPath'));
 
-    // ## Other Stuff!
+  // ## Other Stuff!
 
-    // Manually set values
-    nconf.set('env', env);
+  // Manually set values
+  nconf.set('env', env);
 
-    // Wrap this in a check, because else nconf.get() is executed unnecessarily
-    // To output this, use DEBUG=ghost:*,ghost-config
-    if (_debug.enabled('ghost-config')) {
-        debug(nconf.get());
-    }
+  // Wrap this in a check, because else nconf.get() is executed unnecessarily
+  // To output this, use DEBUG=ghost:*,ghost-config
+  if (_debug.enabled('ghost-config')) {
+    debug(nconf.get());
+  }
 
-    debug('config end');
-    return nconf;
+  debug('config end');
+  return nconf;
 }
 
 module.exports.loadNconf = loadNconf;

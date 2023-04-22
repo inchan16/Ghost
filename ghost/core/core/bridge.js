@@ -29,86 +29,90 @@ const routeSettings = require('./server/services/route-settings');
 const events = require('./server/lib/common/events');
 
 const messages = {
-    activateFailed: 'Unable to activate the theme "{theme}".'
+  activateFailed: 'Unable to activate the theme "{theme}".',
 };
 
 class Bridge {
-    init() {
-        /**
-         * When locale changes, we reload theme translations
-         */
-        events.on('settings.locale.edited', (model) => {
-            debug('Active theme init18n');
-            this.getActiveTheme().initI18n({locale: model.get('value')});
-        });
+  init() {
+    /**
+     * When locale changes, we reload theme translations
+     */
+    events.on('settings.locale.edited', (model) => {
+      debug('Active theme init18n');
+      this.getActiveTheme().initI18n({ locale: model.get('value') });
+    });
 
-        // NOTE: eventually this event should somehow be listened on and handled by the URL Service
-        //       for now this eliminates the need for the frontend routing to listen to
-        //       server events
-        events.on('settings.timezone.edited', (model) => {
-            routerManager.handleTimezoneEdit(model);
-        });
+    // NOTE: eventually this event should somehow be listened on and handled by the URL Service
+    //       for now this eliminates the need for the frontend routing to listen to
+    //       server events
+    events.on('settings.timezone.edited', (model) => {
+      routerManager.handleTimezoneEdit(model);
+    });
+  }
+
+  getActiveTheme() {
+    return themeEngine.getActive();
+  }
+
+  async activateTheme(loadedTheme, checkedTheme) {
+    let settings = {
+      locale: settingsCache.get('locale'),
+    };
+    // no need to check the score, activation should be used in combination with validate.check
+    // Use the two theme objects to set the current active theme
+    try {
+      themeEngine.setActive(settings, loadedTheme, checkedTheme);
+
+      const cardAssetConfig = this.getCardAssetConfig();
+      debug('reload card assets config', cardAssetConfig);
+      await cardAssetService.load(cardAssetConfig);
+
+      // TODO: is this in the right place?
+      // rebuild asset files
+      await commentCountsAssetService.load();
+      await adminAuthAssetService.load();
+      await memberAttributionAssetService.load();
+    } catch (err) {
+      logging.error(
+        new errors.InternalServerError({
+          message: tpl(messages.activateFailed, {
+            theme: loadedTheme.name,
+          }),
+          err: err,
+        })
+      );
     }
+  }
 
-    getActiveTheme() {
-        return themeEngine.getActive();
+  getCardAssetConfig() {
+    if (this.getActiveTheme()) {
+      return this.getActiveTheme().config('card_assets');
+    } else {
+      return true;
     }
+  }
 
-    async activateTheme(loadedTheme, checkedTheme) {
-        let settings = {
-            locale: settingsCache.get('locale')
-        };
-        // no need to check the score, activation should be used in combination with validate.check
-        // Use the two theme objects to set the current active theme
-        try {
-            themeEngine.setActive(settings, loadedTheme, checkedTheme);
+  async reloadFrontend() {
+    debug('reload frontend');
+    const siteApp = require('./frontend/web/site');
 
-            const cardAssetConfig = this.getCardAssetConfig();
-            debug('reload card assets config', cardAssetConfig);
-            await cardAssetService.load(cardAssetConfig);
+    const routerConfig = {
+      routeSettings: await routeSettings.loadRouteSettings(),
+      urlService,
+    };
 
-            // TODO: is this in the right place?
-            // rebuild asset files
-            await commentCountsAssetService.load();
-            await adminAuthAssetService.load();
-            await memberAttributionAssetService.load();
-        } catch (err) {
-            logging.error(new errors.InternalServerError({
-                message: tpl(messages.activateFailed, {theme: loadedTheme.name}),
-                err: err
-            }));
-        }
-    }
+    await siteApp.reload(routerConfig);
 
-    getCardAssetConfig() {
-        if (this.getActiveTheme()) {
-            return this.getActiveTheme().config('card_assets');
-        } else {
-            return true;
-        }
-    }
+    // re-initialize apps (register app routers, because we have re-initialized the site routers)
+    appService.init();
 
-    async reloadFrontend() {
-        debug('reload frontend');
-        const siteApp = require('./frontend/web/site');
-
-        const routerConfig = {
-            routeSettings: await routeSettings.loadRouteSettings(),
-            urlService
-        };
-
-        await siteApp.reload(routerConfig);
-
-        // re-initialize apps (register app routers, because we have re-initialized the site routers)
-        appService.init();
-
-        // connect routers and resources again
-        urlService.queue.start({
-            event: 'init',
-            tolerance: 100,
-            requiredSubscriberCount: 1
-        });
-    }
+    // connect routers and resources again
+    urlService.queue.start({
+      event: 'init',
+      tolerance: 100,
+      requiredSubscriberCount: 1,
+    });
+  }
 }
 
 const bridge = new Bridge();

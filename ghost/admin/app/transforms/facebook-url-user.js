@@ -1,21 +1,24 @@
 import Transform from '@ember-data/serializer/transform';
 
 export default class FacebookUrlUser extends Transform {
-    deserialize(serialized) {
-        if (serialized) {
-            let [, user] = serialized.match(/(\S+)/) || [];
+  deserialize(serialized) {
+    if (serialized) {
+      let [, user] = serialized.match(/(\S+)/) || [];
 
-            return `https://www.facebook.com/${user}`;
-        }
-        return serialized;
+      return `https://www.facebook.com/${user}`;
     }
+    return serialized;
+  }
 
-    serialize(deserialized) {
-        if (deserialized) {
-            let [, user] = deserialized.match(/(?:https:\/\/)(?:www\.)(?:facebook\.com)\/(?:#!\/)?(\w+\/?\S+)/mi) || [];
+  serialize(deserialized) {
+    if (deserialized) {
+      let [, user] =
+        deserialized.match(
+          /(?:https:\/\/)(?:www\.)(?:facebook\.com)\/(?:#!\/)?(\w+\/?\S+)/im
+        ) || [];
 
-            return user;
-        }
-        return deserialized;
+      return user;
     }
+    return deserialized;
+  }
 }

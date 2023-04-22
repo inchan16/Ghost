@@ -1,62 +1,67 @@
 import Component from '@glimmer/component';
-import {action} from '@ember/object';
-import {guidFor} from '@ember/object/internals';
+import { action } from '@ember/object';
+import { guidFor } from '@ember/object/internals';
 
 export default class GhFileInput extends Component {
-    inputId = `fileInput-${guidFor(this)}`;
-    inputElement = null;
+  inputId = `fileInput-${guidFor(this)}`;
+  inputElement = null;
 
-    get alt() {
-        return this.args.alt === undefined ? 'Upload' : this.args.alt;
+  get alt() {
+    return this.args.alt === undefined ? 'Upload' : this.args.alt;
+  }
+
+  @action
+  onChange(e) {
+    e.stopPropagation();
+    const files = this.files(e);
+
+    if (files.length) {
+      this.args.action?.(files, this.resetInput);
     }
+  }
 
-    @action
-    onChange(e) {
-        e.stopPropagation();
-        const files = this.files(e);
+  @action
+  registerFileInput(inputElement) {
+    this.inputElement = inputElement;
+    this.args.onInsert?.(this.inputElement);
+  }
 
-        if (files.length) {
-            this.args.action?.(files, this.resetInput);
-        }
-    }
+  /**
+   * Resets the value of the input so you can select the same file
+   * multiple times.
+   *
+   * NOTE: fixes reset in Firefox which doesn't reset like other browsers
+   * when doing input.value = null;
+   *
+   * @method
+   */
+  @action
+  resetInput() {
+    const input = this.inputElement;
+    input.removeAttribute('value');
+    input.value = null;
 
-    @action
-    registerFileInput(inputElement) {
-        this.inputElement = inputElement;
-        this.args.onInsert?.(this.inputElement);
-    }
+    const clone = input.cloneNode(true);
 
-    /**
-    * Resets the value of the input so you can select the same file
-    * multiple times.
-    *
-    * NOTE: fixes reset in Firefox which doesn't reset like other browsers
-    * when doing input.value = null;
-    *
-    * @method
-    */
-    @action
-    resetInput() {
-        const input = this.inputElement;
-        input.removeAttribute('value');
-        input.value = null;
+    this.inputElement = clone;
+    input.parentNode.replaceChild(clone, input);
 
-        const clone = input.cloneNode(true);
+    return clone;
+  }
 
-        this.inputElement = clone;
-        input.parentNode.replaceChild(clone, input);
-
-        return clone;
-    }
-
-    /**
-    * Gets files from event object.
-    *
-    * @method
-    * @private
-    * @param {$.Event || Event}
-    */
-    files(e) {
-        return (e.originalEvent || e).testingFiles || e.originalEvent?.files || e.target.files || e.files;
-    }
+  /**
+   * Gets files from event object.
+   *
+   * @method
+   * @private
+   * @param {$.Event || Event}
+   */
+  files(e) {
+    return (
+      (e.originalEvent || e).testingFiles ||
+      e.originalEvent?.files ||
+      e.target.files ||
+      e.files
+    );
+  }
 }

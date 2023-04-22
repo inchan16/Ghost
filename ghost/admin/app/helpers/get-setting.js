@@ -1,10 +1,10 @@
 import Helper from '@ember/component/helper';
-import {inject as service} from '@ember/service';
+import { inject as service } from '@ember/service';
 
 export default class GetSetting extends Helper {
-    @service settings;
+  @service settings;
 
-    compute([key = '']) {
-        return this.settings[key];
-    }
+  compute([key = '']) {
+    return this.settings[key];
+  }
 }

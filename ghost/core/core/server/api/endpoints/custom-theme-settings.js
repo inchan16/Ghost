@@ -1,22 +1,24 @@
 const customThemeSettingsService = require('../../services/custom-theme-settings');
 
 module.exports = {
-    docName: 'custom_theme_settings',
+  docName: 'custom_theme_settings',
 
-    browse: {
-        permissions: true,
-        query() {
-            return customThemeSettingsService.api.listSettings();
-        }
+  browse: {
+    permissions: true,
+    query() {
+      return customThemeSettingsService.api.listSettings();
     },
+  },
 
-    edit: {
-        headers: {
-            cacheInvalidate: true
-        },
-        permissions: true,
-        query(frame) {
-            return customThemeSettingsService.api.updateSettings(frame.data.custom_theme_settings);
-        }
-    }
+  edit: {
+    headers: {
+      cacheInvalidate: true,
+    },
+    permissions: true,
+    query(frame) {
+      return customThemeSettingsService.api.updateSettings(
+        frame.data.custom_theme_settings
+      );
+    },
+  },
 };

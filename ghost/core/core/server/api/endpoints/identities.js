@@ -9,27 +9,34 @@ const keyStore = jose.JWK.createKeyStore();
 const keyStoreReady = keyStore.add(dangerousPrivateKey, 'pem');
 
 const getKeyID = async () => {
-    const key = await keyStoreReady;
-    return key.kid;
+  const key = await keyStoreReady;
+  return key.kid;
 };
 
 const sign = async (claims, options) => {
-    const kid = await getKeyID();
-    return jwt.sign(claims, dangerousPrivateKey, Object.assign({
+  const kid = await getKeyID();
+  return jwt.sign(
+    claims,
+    dangerousPrivateKey,
+    Object.assign(
+      {
         issuer,
         expiresIn: '5m',
         algorithm: 'RS256',
-        keyid: kid
-    }, options));
+        keyid: kid,
+      },
+      options
+    )
+  );
 };
 
 module.exports = {
-    docName: 'identities',
-    read: {
-        permissions: true,
-        async query(frame) {
-            const token = await sign({sub: frame.user.get('email')});
-            return {token};
-        }
-    }
+  docName: 'identities',
+  read: {
+    permissions: true,
+    async query(frame) {
+      const token = await sign({ sub: frame.user.get('email') });
+      return { token };
+    },
+  },
 };

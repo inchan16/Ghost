@@ -1,10 +1,6 @@
-const {createAddColumnMigration} = require('../../utils');
+const { createAddColumnMigration } = require('../../utils');
 
-module.exports = createAddColumnMigration(
-    'members',
-    'last_seen_at',
-    {
-        type: 'dateTime',
-        nullable: true
-    }
-);
+module.exports = createAddColumnMigration('members', 'last_seen_at', {
+  type: 'dateTime',
+  nullable: true,
+});

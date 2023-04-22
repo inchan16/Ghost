@@ -4,12 +4,12 @@ import ghostPaths from '../utils/ghost-paths';
 import setupSession from 'ember-simple-auth/initializers/setup-session';
 
 export default {
-    name: 'ember-simple-auth',
-    initialize(registry) {
-        let config = ENV['ember-simple-auth'] || {};
-        config.rootURL = ghostPaths().adminRoot;
-        Configuration.load(config);
+  name: 'ember-simple-auth',
+  initialize(registry) {
+    let config = ENV['ember-simple-auth'] || {};
+    config.rootURL = ghostPaths().adminRoot;
+    Configuration.load(config);
 
-        setupSession(registry);
-    }
+    setupSession(registry);
+  },
 };

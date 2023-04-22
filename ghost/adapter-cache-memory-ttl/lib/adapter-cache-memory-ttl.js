@@ -9,46 +9,46 @@ const Base = require('@tryghost/adapter-base-cache');
  * - it supports a max number of items
  */
 class MemoryTTL extends Base {
-    #cache;
+  #cache;
 
-    /**
-     *
-     * @param {Object} [deps]
-     * @param {Number} [deps.max] - The max number of items to keep in the cache.
-     * @param {Number} [deps.ttl] - The max time in ms to store items
-     */
-    constructor({max = Infinity, ttl = Infinity} = {}) {
-        super();
+  /**
+   *
+   * @param {Object} [deps]
+   * @param {Number} [deps.max] - The max number of items to keep in the cache.
+   * @param {Number} [deps.ttl] - The max time in ms to store items
+   */
+  constructor({ max = Infinity, ttl = Infinity } = {}) {
+    super();
 
-        this.#cache = new TTLCache({max, ttl});
-    }
+    this.#cache = new TTLCache({ max, ttl });
+  }
 
-    get(key) {
-        return this.#cache.get(key);
-    }
+  get(key) {
+    return this.#cache.get(key);
+  }
 
-    /**
-     *
-     * @param {String} key
-     * @param {*} value
-     * @param {Object} [options]
-     * @param {Number} [options.ttl]
-    */
-    set(key, value, {ttl} = {}) {
-        this.#cache.set(key, value, {ttl});
-    }
+  /**
+   *
+   * @param {String} key
+   * @param {*} value
+   * @param {Object} [options]
+   * @param {Number} [options.ttl]
+   */
+  set(key, value, { ttl } = {}) {
+    this.#cache.set(key, value, { ttl });
+  }
 
-    reset() {
-        this.#cache.clear();
-    }
+  reset() {
+    this.#cache.clear();
+  }
 
-    /**
-     * Helper method to assist "getAll" type of operations
-     * @returns {Array<String>} all keys present in the cache
-     */
-    keys() {
-        return [...this.#cache.keys()];
-    }
+  /**
+   * Helper method to assist "getAll" type of operations
+   * @returns {Array<String>} all keys present in the cache
+   */
+  keys() {
+    return [...this.#cache.keys()];
+  }
 }
 
 module.exports = MemoryTTL;

@@ -1,52 +1,54 @@
-import Model, {attr} from '@ember-data/model';
-import {computed} from '@ember/object';
-import {isBlank} from '@ember/utils';
+import Model, { attr } from '@ember-data/model';
+import { computed } from '@ember/object';
+import { isBlank } from '@ember/utils';
 
 export default Model.extend({
-    active: attr('boolean'),
-    gscanErrors: attr('raw', {defaultValue: () => []}), // renamed from 'errors' to avoid clash with Ember Data Model's `errors` property
-    name: attr('string'),
-    package: attr('raw'),
-    templates: attr('raw', {defaultValue: () => []}),
-    warnings: attr('raw', {defaultValue: () => []}),
+  active: attr('boolean'),
+  gscanErrors: attr('raw', { defaultValue: () => [] }), // renamed from 'errors' to avoid clash with Ember Data Model's `errors` property
+  name: attr('string'),
+  package: attr('raw'),
+  templates: attr('raw', { defaultValue: () => [] }),
+  warnings: attr('raw', { defaultValue: () => [] }),
 
-    customTemplates: computed('templates.[]', function () {
-        let templates = this.templates || [];
+  customTemplates: computed('templates.[]', function () {
+    let templates = this.templates || [];
 
-        return templates.filter(function (template) {
-            return isBlank(template.slug);
-        });
-    }),
+    return templates.filter(function (template) {
+      return isBlank(template.slug);
+    });
+  }),
 
-    slugTemplates: computed('templates.[]', function () {
-        let templates = this.templates || [];
+  slugTemplates: computed('templates.[]', function () {
+    let templates = this.templates || [];
 
-        return templates.filter(function (template) {
-            return !isBlank(template.slug);
-        });
-    }),
+    return templates.filter(function (template) {
+      return !isBlank(template.slug);
+    });
+  }),
 
-    activate() {
-        let adapter = this.store.adapterFor(this.constructor.modelName);
+  activate() {
+    let adapter = this.store.adapterFor(this.constructor.modelName);
 
-        return adapter.activate(this).then(() => {
-            // the server only gives us the newly active theme back so we need
-            // to manually mark other themes as inactive in the store
-            let activeThemes = this.store.peekAll('theme').filterBy('active', true);
+    return adapter.activate(this).then(() => {
+      // the server only gives us the newly active theme back so we need
+      // to manually mark other themes as inactive in the store
+      let activeThemes = this.store.peekAll('theme').filterBy('active', true);
 
-            activeThemes.forEach((theme) => {
-                if (theme !== this) {
-                    // store.push is necessary to avoid dirty records that cause
-                    // problems when we get new data back in subsequent requests
-                    this.store.push({data: {
-                        id: theme.id,
-                        type: 'theme',
-                        attributes: {active: false}
-                    }});
-                }
-            });
+      activeThemes.forEach((theme) => {
+        if (theme !== this) {
+          // store.push is necessary to avoid dirty records that cause
+          // problems when we get new data back in subsequent requests
+          this.store.push({
+            data: {
+              id: theme.id,
+              type: 'theme',
+              attributes: { active: false },
+            },
+          });
+        }
+      });
 
-            return this;
-        });
-    }
+      return this;
+    });
+  },
 });

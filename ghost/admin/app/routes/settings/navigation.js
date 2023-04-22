@@ -1,74 +1,74 @@
 import AdminRoute from 'ghost-admin/routes/admin';
 import ConfirmUnsavedChangesModal from '../../components/modals/confirm-unsaved-changes';
-import {action} from '@ember/object';
-import {inject as service} from '@ember/service';
+import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
 
 export default class NavigationRoute extends AdminRoute {
-    @service modals;
-    @service settings;
+  @service modals;
+  @service settings;
 
-    model() {
-        this.settings.reload();
+  model() {
+    this.settings.reload();
+  }
+
+  setupController() {
+    this.controller.reset();
+  }
+
+  deactivate() {
+    this.confirmModal = null;
+    this.hasConfirmed = false;
+    this.controller.reset();
+  }
+
+  @action
+  async willTransition(transition) {
+    if (this.hasConfirmed) {
+      return true;
     }
 
-    setupController() {
-        this.controller.reset();
+    transition.abort();
+
+    // wait for any existing confirm modal to be closed before allowing transition
+    if (this.confirmModal) {
+      return;
     }
 
-    deactivate() {
-        this.confirmModal = null;
-        this.hasConfirmed = false;
-        this.controller.reset();
+    if (this.controller.saveTask?.isRunning) {
+      await this.controller.saveTask.last;
     }
 
-    @action
-    async willTransition(transition) {
-        if (this.hasConfirmed) {
-            return true;
-        }
+    const shouldLeave = await this.confirmUnsavedChanges();
 
-        transition.abort();
+    if (shouldLeave) {
+      this.settings.rollbackAttributes();
+      this.hasConfirmed = true;
+      return transition.retry();
+    }
+  }
 
-        // wait for any existing confirm modal to be closed before allowing transition
-        if (this.confirmModal) {
-            return;
-        }
+  async confirmUnsavedChanges() {
+    if (this.controller.dirtyAttributes) {
+      this.confirmModal = this.modals
+        .open(ConfirmUnsavedChangesModal)
+        .finally(() => {
+          this.confirmModal = null;
+        });
 
-        if (this.controller.saveTask?.isRunning) {
-            await this.controller.saveTask.last;
-        }
-
-        const shouldLeave = await this.confirmUnsavedChanges();
-
-        if (shouldLeave) {
-            this.settings.rollbackAttributes();
-            this.hasConfirmed = true;
-            return transition.retry();
-        }
+      return this.confirmModal;
     }
 
-    async confirmUnsavedChanges() {
-        if (this.controller.dirtyAttributes) {
-            this.confirmModal = this.modals
-                .open(ConfirmUnsavedChangesModal)
-                .finally(() => {
-                    this.confirmModal = null;
-                });
+    return true;
+  }
 
-            return this.confirmModal;
-        }
+  @action
+  save() {
+    this.controller.send('save');
+  }
 
-        return true;
-    }
-
-    @action
-    save() {
-        this.controller.send('save');
-    }
-
-    buildRouteInfoMetadata() {
-        return {
-            titleToken: 'Settings - Navigation'
-        };
-    }
+  buildRouteInfoMetadata() {
+    return {
+      titleToken: 'Settings - Navigation',
+    };
+  }
 }

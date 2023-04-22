@@ -1,26 +1,28 @@
 //@ts-check
-const debug = require('@tryghost/debug')('api:endpoints:utils:serializers:output:members');
-const {unparse} = require('@tryghost/members-csv');
+const debug = require('@tryghost/debug')(
+  'api:endpoints:utils:serializers:output:members'
+);
+const { unparse } = require('@tryghost/members-csv');
 const mappers = require('./mappers');
 const labs = require('../../../../../../shared/labs');
 
 module.exports = {
-    browse: createSerializer('browse', paginatedMembers),
-    read: createSerializer('read', singleMember),
-    edit: createSerializer('edit', singleMember),
-    add: createSerializer('add', singleMember),
-    destroy: createSerializer('destroy', passthrough),
+  browse: createSerializer('browse', paginatedMembers),
+  read: createSerializer('read', singleMember),
+  edit: createSerializer('edit', singleMember),
+  add: createSerializer('add', singleMember),
+  destroy: createSerializer('destroy', passthrough),
 
-    editSubscription: createSerializer('editSubscription', singleMember),
-    createSubscription: createSerializer('createSubscription', singleMember),
-    bulkDestroy: createSerializer('bulkDestroy', passthrough),
-    bulkEdit: createSerializer('bulkEdit', bulkAction),
-    exportCSV: createSerializer('exportCSV', exportCSV),
+  editSubscription: createSerializer('editSubscription', singleMember),
+  createSubscription: createSerializer('createSubscription', singleMember),
+  bulkDestroy: createSerializer('bulkDestroy', passthrough),
+  bulkEdit: createSerializer('bulkEdit', bulkAction),
+  exportCSV: createSerializer('exportCSV', exportCSV),
 
-    importCSV: createSerializer('importCSV', passthrough),
-    memberStats: createSerializer('memberStats', passthrough),
-    mrrStats: createSerializer('mrrStats', passthrough),
-    activityFeed: createSerializer('activityFeed', activityFeed)
+  importCSV: createSerializer('importCSV', passthrough),
+  memberStats: createSerializer('memberStats', passthrough),
+  mrrStats: createSerializer('mrrStats', passthrough),
+  activityFeed: createSerializer('activityFeed', activityFeed),
 };
 
 /**
@@ -33,10 +35,10 @@ module.exports = {
  * @returns {{members: SerializedMember[], meta: PageMeta}}
  */
 function paginatedMembers(page, _apiConfig, frame) {
-    return {
-        members: page.data.map(model => serializeMember(model, frame.options)),
-        meta: page.meta
-    };
+  return {
+    members: page.data.map((model) => serializeMember(model, frame.options)),
+    meta: page.meta,
+  };
 }
 
 /**
@@ -47,9 +49,9 @@ function paginatedMembers(page, _apiConfig, frame) {
  * @returns {{members: SerializedMember[]}}
  */
 function singleMember(model, _apiConfig, frame) {
-    return {
-        members: [serializeMember(model, frame.options)]
-    };
+  return {
+    members: [serializeMember(model, frame.options)],
+  };
 }
 
 /**
@@ -60,19 +62,19 @@ function singleMember(model, _apiConfig, frame) {
  * @returns {{bulk: SerializedBulkAction}}
  */
 function bulkAction(bulkActionResult, _apiConfig, frame) {
-    return {
-        bulk: {
-            action: frame.data.action,
-            meta: {
-                stats: {
-                    successful: bulkActionResult.successful,
-                    unsuccessful: bulkActionResult.unsuccessful
-                },
-                errors: bulkActionResult.errors,
-                unsuccessfulData: bulkActionResult.unsuccessfulData
-            }
-        }
-    };
+  return {
+    bulk: {
+      action: frame.data.action,
+      meta: {
+        stats: {
+          successful: bulkActionResult.successful,
+          unsuccessful: bulkActionResult.unsuccessful,
+        },
+        errors: bulkActionResult.errors,
+        unsuccessfulData: bulkActionResult.unsuccessfulData,
+      },
+    },
+  };
 }
 
 /**
@@ -80,10 +82,10 @@ function bulkAction(bulkActionResult, _apiConfig, frame) {
  * @returns {{events: any[], meta: any}}
  */
 function activityFeed(data, _apiConfig, frame) {
-    return {
-        events: data.events.map(e => mappers.activityFeedEvents(e, frame)),
-        meta: data.meta
-    };
+  return {
+    events: data.events.map((e) => mappers.activityFeedEvents(e, frame)),
+    meta: data.meta,
+  };
 }
 
 /**
@@ -94,24 +96,24 @@ function activityFeed(data, _apiConfig, frame) {
  * @returns {string} - A CSV string
  */
 function exportCSV(data) {
-    debug('exportCSV');
-    return unparse(data.data);
+  debug('exportCSV');
+  return unparse(data.data);
 }
 
 function serializeAttribution(attribution) {
-    if (!attribution) {
-        return attribution;
-    }
+  if (!attribution) {
+    return attribution;
+  }
 
-    return {
-        id: attribution?.id,
-        type: attribution?.type,
-        url: attribution?.url,
-        title: attribution?.title,
-        referrer_source: attribution?.referrerSource,
-        referrer_medium: attribution?.referrerMedium,
-        referrer_url: attribution.referrerUrl
-    };
+  return {
+    id: attribution?.id,
+    type: attribution?.type,
+    url: attribution?.url,
+    title: attribution?.title,
+    referrer_source: attribution?.referrerSource,
+    referrer_medium: attribution?.referrerMedium,
+    referrer_url: attribution.referrerUrl,
+  };
 }
 
 /**
@@ -121,75 +123,78 @@ function serializeAttribution(attribution) {
  * @returns {SerializedMember}
  */
 function serializeMember(member, options) {
-    const json = member.toJSON ? member.toJSON(options) : member;
+  const json = member.toJSON ? member.toJSON(options) : member;
 
-    const comped = json.status === 'comped';
+  const comped = json.status === 'comped';
 
-    const subscriptions = json.subscriptions || [];
+  const subscriptions = json.subscriptions || [];
 
-    const serialized = {
-        id: json.id,
-        uuid: json.uuid,
-        email: json.email,
-        name: json.name,
-        note: json.note,
-        geolocation: json.geolocation,
-        subscribed: json.subscribed,
-        created_at: json.created_at,
-        updated_at: json.updated_at,
-        labels: json.labels,
-        subscriptions: subscriptions,
-        avatar_image: json.avatar_image,
-        comped: comped,
-        email_count: json.email_count,
-        email_opened_count: json.email_opened_count,
-        email_open_rate: json.email_open_rate,
-        email_recipients: json.email_recipients,
-        status: json.status,
-        last_seen_at: json.last_seen_at,
-        attribution: serializeAttribution(json.attribution)
-    };
+  const serialized = {
+    id: json.id,
+    uuid: json.uuid,
+    email: json.email,
+    name: json.name,
+    note: json.note,
+    geolocation: json.geolocation,
+    subscribed: json.subscribed,
+    created_at: json.created_at,
+    updated_at: json.updated_at,
+    labels: json.labels,
+    subscriptions: subscriptions,
+    avatar_image: json.avatar_image,
+    comped: comped,
+    email_count: json.email_count,
+    email_opened_count: json.email_opened_count,
+    email_open_rate: json.email_open_rate,
+    email_recipients: json.email_recipients,
+    status: json.status,
+    last_seen_at: json.last_seen_at,
+    attribution: serializeAttribution(json.attribution),
+  };
 
-    if (json.products) {
-        serialized.tiers = json.products;
+  if (json.products) {
+    serialized.tiers = json.products;
+  }
+
+  // Rename subscriptions.price.product to subscriptions.price.tier
+  for (const subscription of serialized.subscriptions) {
+    if (!subscription.price) {
+      continue;
     }
 
-    // Rename subscriptions.price.product to subscriptions.price.tier
-    for (const subscription of serialized.subscriptions) {
-        if (!subscription.price) {
-            continue;
-        }
+    if (!subscription.price.tier && subscription.price.product) {
+      subscription.price.tier = subscription.price.product;
 
-        if (!subscription.price.tier && subscription.price.product) {
-            subscription.price.tier = subscription.price.product;
-
-            if (!subscription.price.tier.tier_id) {
-                subscription.price.tier.tier_id = subscription.price.tier.product_id;
-            }
-            delete subscription.price.tier.product_id;
-        }
-        subscription.attribution = serializeAttribution(subscription.attribution);
-        delete subscription.price.product;
+      if (!subscription.price.tier.tier_id) {
+        subscription.price.tier.tier_id = subscription.price.tier.product_id;
+      }
+      delete subscription.price.tier.product_id;
     }
+    subscription.attribution = serializeAttribution(subscription.attribution);
+    delete subscription.price.product;
+  }
 
-    if (labs.isSet('suppressionList')) {
-        serialized.email_suppression = json.email_suppression;
-    }
+  if (labs.isSet('suppressionList')) {
+    serialized.email_suppression = json.email_suppression;
+  }
 
-    if (json.newsletters) {
-        serialized.newsletters = json.newsletters
-            .filter(newsletter => newsletter.status === 'active')
-            .sort((a, b) => {
-                return a.sort_order - b.sort_order;
-            });
-    }
-    // override the `subscribed` param to mean "subscribed to any active newsletter"
-    serialized.subscribed = false;
-    if (Array.isArray(serialized.newsletters) && serialized.newsletters.length > 0) {
-        serialized.subscribed = true;
-    }
+  if (json.newsletters) {
+    serialized.newsletters = json.newsletters
+      .filter((newsletter) => newsletter.status === 'active')
+      .sort((a, b) => {
+        return a.sort_order - b.sort_order;
+      });
+  }
+  // override the `subscribed` param to mean "subscribed to any active newsletter"
+  serialized.subscribed = false;
+  if (
+    Array.isArray(serialized.newsletters) &&
+    serialized.newsletters.length > 0
+  ) {
+    serialized.subscribed = true;
+  }
 
-    return serialized;
+  return serialized;
 }
 
 /**
@@ -198,7 +203,7 @@ function serializeMember(member, options) {
  * @returns Data
  */
 function passthrough(data) {
-    return data;
+  return data;
 }
 
 /**
@@ -210,11 +215,11 @@ function passthrough(data) {
  * @returns {(data: Data, apiConfig: APIConfig, frame: Frame) => void}
  */
 function createSerializer(debugString, serialize) {
-    return function serializer(data, apiConfig, frame) {
-        debug(debugString);
-        const response = serialize(data, apiConfig, frame);
-        frame.response = response;
-    };
+  return function serializer(data, apiConfig, frame) {
+    debug(debugString);
+    const response = serialize(data, apiConfig, frame);
+    frame.response = response;
+  };
 }
 
 /**

@@ -1,12 +1,12 @@
 const publicConfig = require('../../services/public-config');
 
 module.exports = {
-    docName: 'config',
+  docName: 'config',
 
-    read: {
-        permissions: false,
-        query() {
-            return publicConfig.config;
-        }
-    }
+  read: {
+    permissions: false,
+    query() {
+      return publicConfig.config;
+    },
+  },
 };

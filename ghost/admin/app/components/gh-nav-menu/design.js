@@ -1,86 +1,92 @@
 import Component from '@glimmer/component';
-import {action} from '@ember/object';
-import {bind} from '@ember/runloop';
-import {inject} from 'ghost-admin/decorators/inject';
-import {isEmpty} from '@ember/utils';
-import {inject as service} from '@ember/service';
-import {tracked} from '@glimmer/tracking';
+import { action } from '@ember/object';
+import { bind } from '@ember/runloop';
+import { inject } from 'ghost-admin/decorators/inject';
+import { isEmpty } from '@ember/utils';
+import { inject as service } from '@ember/service';
+import { tracked } from '@glimmer/tracking';
 
 export default class DesignMenuComponent extends Component {
-    @service customThemeSettings;
-    @service router;
-    @service settings;
-    @service store;
-    @service themeManagement;
+  @service customThemeSettings;
+  @service router;
+  @service settings;
+  @service store;
+  @service themeManagement;
 
-    @inject config;
+  @inject config;
 
-    @tracked openSection = null;
+  @tracked openSection = null;
 
-    themes = this.store.peekAll('theme');
+  themes = this.store.peekAll('theme');
 
-    constructor() {
-        super(...arguments);
+  constructor() {
+    super(...arguments);
 
-        // fetch all themes in the background so we can show the active theme
-        this.store.findAll('theme');
+    // fetch all themes in the background so we can show the active theme
+    this.store.findAll('theme');
 
-        if (this.router.currentRouteName === 'settings.design.index') {
-            this.openDefaultSection();
-        }
-
-        this.routeDidChangeHandler = bind(this, this.handleRouteDidChange);
-        this.router.on('routeDidChange', this.routeDidChangeHandler);
+    if (this.router.currentRouteName === 'settings.design.index') {
+      this.openDefaultSection();
     }
 
-    willDestroy() {
-        super.willDestroy(...arguments);
-        this.router.off('routeDidChange', this.routeDidChangeHandler);
+    this.routeDidChangeHandler = bind(this, this.handleRouteDidChange);
+    this.router.on('routeDidChange', this.routeDidChangeHandler);
+  }
+
+  willDestroy() {
+    super.willDestroy(...arguments);
+    this.router.off('routeDidChange', this.routeDidChangeHandler);
+  }
+
+  get activeTheme() {
+    return this.themes.findBy('active', true);
+  }
+
+  @action
+  toggleSection(section) {
+    if (this.openSection === section) {
+      this.openSection = null;
+    } else {
+      this.openSection = section;
+
+      const group = this.customThemeSettings.KNOWN_GROUPS.findBy(
+        'key',
+        section
+      );
+      if (group && group.previewType) {
+        this.themeManagement.setPreviewType(group.previewType);
+      } else {
+        this.themeManagement.setPreviewType('homepage');
+      }
     }
+  }
 
-    get activeTheme() {
-        return this.themes.findBy('active', true);
+  @action
+  transitionBackToIndex() {
+    if (this.router.currentRouteName !== 'settings.design.index') {
+      this.router.transitionTo('settings.design.index');
     }
+  }
 
-    @action
-    toggleSection(section) {
-        if (this.openSection === section) {
-            this.openSection = null;
-        } else {
-            this.openSection = section;
+  @action
+  closeAllSections() {
+    this.openSection = null;
+  }
 
-            const group = this.customThemeSettings.KNOWN_GROUPS.findBy('key', section);
-            if (group && group.previewType) {
-                this.themeManagement.setPreviewType(group.previewType);
-            } else {
-                this.themeManagement.setPreviewType('homepage');
-            }
-        }
+  openDefaultSection() {
+    const noCustomSettings = isEmpty(this.customThemeSettings.settings);
+
+    if (noCustomSettings) {
+      this.openSection = 'brand';
     }
+  }
 
-    @action
-    transitionBackToIndex() {
-        if (this.router.currentRouteName !== 'settings.design.index') {
-            this.router.transitionTo('settings.design.index');
-        }
+  handleRouteDidChange(transition) {
+    if (
+      !transition.isAborted &&
+      transition.to?.name === 'settings.design.index'
+    ) {
+      this.openDefaultSection();
     }
-
-    @action
-    closeAllSections() {
-        this.openSection = null;
-    }
-
-    openDefaultSection() {
-        const noCustomSettings = isEmpty(this.customThemeSettings.settings);
-
-        if (noCustomSettings) {
-            this.openSection = 'brand';
-        }
-    }
-
-    handleRouteDidChange(transition) {
-        if (!transition.isAborted && transition.to?.name === 'settings.design.index') {
-            this.openDefaultSection();
-        }
-    }
+  }
 }

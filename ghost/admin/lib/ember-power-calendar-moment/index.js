@@ -2,9 +2,9 @@
 'use strict';
 
 module.exports = {
-    name: 'ember-power-calendar-moment',
+  name: 'ember-power-calendar-moment',
 
-    isDevelopingAddon() {
-        return true;
-    }
+  isDevelopingAddon() {
+    return true;
+  },
 };

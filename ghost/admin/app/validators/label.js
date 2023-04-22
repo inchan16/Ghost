@@ -1,14 +1,14 @@
 import BaseValidator from './base';
-import {isBlank} from '@ember/utils';
+import { isBlank } from '@ember/utils';
 
 export default BaseValidator.create({
-    properties: ['name'],
+  properties: ['name'],
 
-    name(model) {
-        if (isBlank(model.name)) {
-            model.errors.add('name', 'Please enter a name');
-            model.hasValidated.pushObject('name');
-            this.invalidate();
-        }
+  name(model) {
+    if (isBlank(model.name)) {
+      model.errors.add('name', 'Please enter a name');
+      model.hasValidated.pushObject('name');
+      this.invalidate();
     }
+  },
 });

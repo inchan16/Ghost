@@ -5,15 +5,15 @@ const logging = require('@tryghost/logging');
 const schemaTables = Object.keys(schema);
 
 module.exports.up = async (options) => {
-    const connection = options.connection;
+  const connection = options.connection;
 
-    const existingTables = await commands.getTables(connection);
-    const missingTables = schemaTables.filter(t => !existingTables.includes(t));
+  const existingTables = await commands.getTables(connection);
+  const missingTables = schemaTables.filter((t) => !existingTables.includes(t));
 
-    await Promise.mapSeries(missingTables, async (table) => {
-        logging.info('Creating table: ' + table);
-        await commands.createTable(table, connection);
-    });
+  await Promise.mapSeries(missingTables, async (table) => {
+    logging.info('Creating table: ' + table);
+    await commands.createTable(table, connection);
+  });
 };
 
 /**

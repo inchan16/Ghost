@@ -5,25 +5,25 @@ import Transform from '@ember-data/serializer/transform';
 // expand/convert them here to make usage elsewhere easier
 
 export default class MembersSegmentStringTransform extends Transform {
-    deserialize(serialized) {
-        if (serialized === 'all') {
-            return 'status:free,status:-free';
-        }
-        if (serialized === 'none') {
-            return null;
-        }
-
-        return serialized;
+  deserialize(serialized) {
+    if (serialized === 'all') {
+      return 'status:free,status:-free';
+    }
+    if (serialized === 'none') {
+      return null;
     }
 
-    serialize(deserialized) {
-        if (deserialized === 'status:free,status:-free') {
-            return 'all';
-        }
-        if (!deserialized) {
-            return 'none';
-        }
+    return serialized;
+  }
 
-        return deserialized;
+  serialize(deserialized) {
+    if (deserialized === 'status:free,status:-free') {
+      return 'all';
     }
+    if (!deserialized) {
+      return 'none';
+    }
+
+    return deserialized;
+  }
 }

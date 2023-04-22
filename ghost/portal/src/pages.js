@@ -16,39 +16,39 @@ import EmailReceivingFAQ from './components/pages/EmailReceivingFAQ';
 
 /** List of all available pages in Portal, mapped to their UI component
  * Any new page added to portal needs to be mapped here
-*/
+ */
 const Pages = {
-    signin: SigninPage,
-    signup: SignupPage,
-    accountHome: AccountHomePage,
-    accountPlan: AccountPlanPage,
-    accountProfile: AccountProfilePage,
-    accountEmail: AccountEmailPage,
-    signupNewsletter: NewsletterSelectionPage,
-    unsubscribe: UnsubscribePage,
-    magiclink: MagicLinkPage,
-    loading: LoadingPage,
-    offer: OfferPage,
-    feedback: FeedbackPage,
-    emailSuppressed: EmailSuppressedPage,
-    emailSuppressionFAQ: EmailSuppressionFAQ,
-    emailReceivingFAQ: EmailReceivingFAQ
+  signin: SigninPage,
+  signup: SignupPage,
+  accountHome: AccountHomePage,
+  accountPlan: AccountPlanPage,
+  accountProfile: AccountProfilePage,
+  accountEmail: AccountEmailPage,
+  signupNewsletter: NewsletterSelectionPage,
+  unsubscribe: UnsubscribePage,
+  magiclink: MagicLinkPage,
+  loading: LoadingPage,
+  offer: OfferPage,
+  feedback: FeedbackPage,
+  emailSuppressed: EmailSuppressedPage,
+  emailSuppressionFAQ: EmailSuppressionFAQ,
+  emailReceivingFAQ: EmailReceivingFAQ,
 };
 
 /** Return page if valid, fallback to signup */
-export const getActivePage = function ({page}) {
-    if (Object.keys(Pages).includes(page)) {
-        return page;
-    }
-    return 'signup';
+export const getActivePage = function ({ page }) {
+  if (Object.keys(Pages).includes(page)) {
+    return page;
+  }
+  return 'signup';
 };
 
-export const isAccountPage = function ({page}) {
-    return page.includes('account');
+export const isAccountPage = function ({ page }) {
+  return page.includes('account');
 };
 
-export const isOfferPage = function ({page}) {
-    return page.includes('offer');
+export const isOfferPage = function ({ page }) {
+  return page.includes('offer');
 };
 
 export default Pages;

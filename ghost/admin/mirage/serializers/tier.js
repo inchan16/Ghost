@@ -1,22 +1,22 @@
 import BaseSerializer from './application';
-import {underscore} from '@ember/string';
+import { underscore } from '@ember/string';
 
 export default BaseSerializer.extend({
-    embed: true,
+  embed: true,
 
-    include(/*request*/) {
-        let includes = [];
+  include(/*request*/) {
+    let includes = [];
 
-        includes.push('tierBenefits');
+    includes.push('tierBenefits');
 
-        return includes;
-    },
+    return includes;
+  },
 
-    keyForEmbeddedRelationship(relationshipName) {
-        if (relationshipName === 'tierBenefits') {
-            return 'benefits';
-        }
-
-        return underscore(relationshipName);
+  keyForEmbeddedRelationship(relationshipName) {
+    if (relationshipName === 'tierBenefits') {
+      return 'benefits';
     }
+
+    return underscore(relationshipName);
+  },
 });

@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-card-gallery';
+export { default } from 'koenig-editor/components/koenig-card-gallery';

@@ -22,19 +22,19 @@ const crypto = require('crypto');
  * @returns
  */
 module.exports.create = (typeOrLength) => {
-    let bytes;
-    let length;
+  let bytes;
+  let length;
 
-    if (Number.isInteger(typeOrLength)) {
-        bytes = Math.ceil(typeOrLength / 2);
-        length = typeOrLength;
-    } else if (typeOrLength === 'content') {
-        bytes = 13;
-        length = 26;
-    } else {
-        bytes = 32;
-        length = 64;
-    }
+  if (Number.isInteger(typeOrLength)) {
+    bytes = Math.ceil(typeOrLength / 2);
+    length = typeOrLength;
+  } else if (typeOrLength === 'content') {
+    bytes = 13;
+    length = 26;
+  } else {
+    bytes = 32;
+    length = 64;
+  }
 
-    return crypto.randomBytes(bytes).toString('hex').slice(0, length);
+  return crypto.randomBytes(bytes).toString('hex').slice(0, length);
 };

@@ -1,13 +1,13 @@
 import BaseSerializer from './application';
-import {camelize} from '@ember/string';
+import { camelize } from '@ember/string';
 
 export default BaseSerializer.extend({
-    embed: true,
+  embed: true,
 
-    include(request) {
-        if (!request.queryParams.include) {
-            return;
-        }
-        return request.queryParams.include.split(',').map(camelize);
+  include(request) {
+    if (!request.queryParams.include) {
+      return;
     }
+    return request.queryParams.include.split(',').map(camelize);
+  },
 });

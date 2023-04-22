@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-card-embed/nft';
+export { default } from 'koenig-editor/components/koenig-card-embed/nft';

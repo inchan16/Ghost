@@ -1,23 +1,23 @@
 import AdminRoute from 'ghost-admin/routes/admin';
-import {inject as service} from '@ember/service';
+import { inject as service } from '@ember/service';
 
 export default class LabsRoute extends AdminRoute {
-    @service settings;
-    @service notifications;
+  @service settings;
+  @service notifications;
 
-    model() {
-        return this.settings.reload();
-    }
+  model() {
+    return this.settings.reload();
+  }
 
-    resetController(controller, isExiting) {
-        if (isExiting) {
-            controller.reset();
-        }
+  resetController(controller, isExiting) {
+    if (isExiting) {
+      controller.reset();
     }
+  }
 
-    buildRouteInfoMetadata() {
-        return {
-            titleToken: 'Settings - Labs'
-        };
-    }
+  buildRouteInfoMetadata() {
+    return {
+      titleToken: 'Settings - Labs',
+    };
+  }
 }

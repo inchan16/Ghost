@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-card-paywall';
+export { default } from 'koenig-editor/components/koenig-card-paywall';

@@ -5,25 +5,25 @@ import Transform from '@ember-data/serializer/transform';
 // expand/convert them here to make usage elsewhere easier
 
 export default class VisibilityString extends Transform {
-    deserialize(serialized) {
-        if (serialized === 'members') {
-            return 'status:free,status:-free';
-        }
-        if (serialized === 'paid') {
-            return 'status:-free';
-        }
-
-        return serialized;
+  deserialize(serialized) {
+    if (serialized === 'members') {
+      return 'status:free,status:-free';
+    }
+    if (serialized === 'paid') {
+      return 'status:-free';
     }
 
-    serialize(deserialized) {
-        if (deserialized === 'status:free,status:-free') {
-            return 'members';
-        }
-        if (deserialized === 'status:-free') {
-            return 'paid';
-        }
+    return serialized;
+  }
 
-        return deserialized;
+  serialize(deserialized) {
+    if (deserialized === 'status:free,status:-free') {
+      return 'members';
     }
+    if (deserialized === 'status:-free') {
+      return 'paid';
+    }
+
+    return deserialized;
+  }
 }

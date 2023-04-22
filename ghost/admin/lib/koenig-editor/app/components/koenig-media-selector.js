@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-media-selector';
+export { default } from 'koenig-editor/components/koenig-media-selector';

@@ -4,17 +4,17 @@
  * can optionally use a passed cache provider to reuse the email body for each batch with the same segment.
  */
 class EmailBodyCache {
-    constructor() {
-        this.cache = new Map();
-    }
+  constructor() {
+    this.cache = new Map();
+  }
 
-    get(key) {
-        return this.cache.get(key) ?? null;
-    }
+  get(key) {
+    return this.cache.get(key) ?? null;
+  }
 
-    set(key, value) {
-        this.cache.set(key, value);
-    }
+  set(key, value) {
+    this.cache.set(key, value);
+  }
 }
 
 module.exports = EmailBodyCache;

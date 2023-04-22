@@ -1,22 +1,22 @@
 import Service from '@ember/service';
-import {tracked} from '@glimmer/tracking';
+import { tracked } from '@glimmer/tracking';
 
 export default class KoenigUiService extends Service {
-    @tracked captionHasFocus = false;
-    @tracked inputHasFocus = false;
-    @tracked isDragging = false;
+  @tracked captionHasFocus = false;
+  @tracked inputHasFocus = false;
+  @tracked isDragging = false;
 
-    #focusedCaption = null;
+  #focusedCaption = null;
 
-    captionGainedFocus(caption) {
-        this.captionHasFocus = true;
-        this.#focusedCaption = caption;
+  captionGainedFocus(caption) {
+    this.captionHasFocus = true;
+    this.#focusedCaption = caption;
+  }
+
+  captionLostFocus(caption) {
+    if (this.#focusedCaption === caption) {
+      this.captionHasFocus = false;
+      this.#focusedCaption = null;
     }
-
-    captionLostFocus(caption) {
-        if (this.#focusedCaption === caption) {
-            this.captionHasFocus = false;
-            this.#focusedCaption = null;
-        }
-    }
+  }
 }

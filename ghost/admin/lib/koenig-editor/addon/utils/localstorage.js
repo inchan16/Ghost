@@ -5,11 +5,11 @@
  * @returns {string?} The value
  */
 export function get(key) {
-    try {
-        return localStorage.getItem(key);
-    } catch (e) {
-        // do nothing here
-    }
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    // do nothing here
+  }
 }
 
 /**
@@ -19,9 +19,9 @@ export function get(key) {
  * @param {string} value The value to store
  */
 export function set(key, value) {
-    try {
-        localStorage.setItem(key, value);
-    } catch (e) {
-        // do nothing here
-    }
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    // do nothing here
+  }
 }

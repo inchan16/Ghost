@@ -1,3 +1,3 @@
 module.exports = {
-    URLResourceUpdatedEvent: require('./lib/URLResourceUpdatedEvent')
+  URLResourceUpdatedEvent: require('./lib/URLResourceUpdatedEvent'),
 };

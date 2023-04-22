@@ -1,25 +1,25 @@
 import Component from '@ember/component';
 import classic from 'ember-classic-decorator';
-import {htmlSafe} from '@ember/template';
-import {tagName} from '@ember-decorators/component';
+import { htmlSafe } from '@ember/template';
+import { tagName } from '@ember-decorators/component';
 
 @classic
 @tagName('')
 export default class GhProgressBar extends Component {
-    // Public attributes
-    percentage = 0;
+  // Public attributes
+  percentage = 0;
 
-    isError = false;
+  isError = false;
 
-    // Internal attributes
-    progressStyle = '';
+  // Internal attributes
+  progressStyle = '';
 
-    didReceiveAttrs() {
-        super.didReceiveAttrs(...arguments);
+  didReceiveAttrs() {
+    super.didReceiveAttrs(...arguments);
 
-        let percentage = this.percentage;
-        let width = (percentage > 0) ? `${percentage}%` : '0';
+    let percentage = this.percentage;
+    let width = percentage > 0 ? `${percentage}%` : '0';
 
-        this.set('progressStyle', htmlSafe(`width: ${width}`));
-    }
+    this.set('progressStyle', htmlSafe(`width: ${width}`));
+  }
 }

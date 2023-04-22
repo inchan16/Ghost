@@ -5,13 +5,13 @@ const adapterManager = require('../../services/adapter-manager');
  * @returns {Object} adapter instance
  */
 function getStorage(feature) {
-    let adapterName = 'storage';
+  let adapterName = 'storage';
 
-    if (feature) {
-        adapterName += `:${feature}`;
-    }
+  if (feature) {
+    adapterName += `:${feature}`;
+  }
 
-    return adapterManager.getAdapter(adapterName);
+  return adapterManager.getAdapter(adapterName);
 }
 
 module.exports.getStorage = getStorage;

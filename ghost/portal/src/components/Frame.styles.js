@@ -1,22 +1,22 @@
 /** By default, CRAs webpack bundle combines and appends the main css at root level, so they are not applied inside iframe
  * This uses a hack where we append `<style> </style>` tag with all CSS inside the head of iframe dynamically, thus making it available easily
  * We can create separate variables to keep styles grouped logically, and export them as one appended string
-*/
+ */
 
-import {GlobalStyles} from './Global.styles';
-import {ActionButtonStyles} from './common/ActionButton';
-import {BackButtonStyles} from './common/BackButton';
-import {SwitchStyles} from './common/Switch';
+import { GlobalStyles } from './Global.styles';
+import { ActionButtonStyles } from './common/ActionButton';
+import { BackButtonStyles } from './common/BackButton';
+import { SwitchStyles } from './common/Switch';
 import AccountHomePageStyles from './pages/AccountHomePage/AccountHomePage.css';
-import {AccountPlanPageStyles} from './pages/AccountPlanPage';
-import {InputFieldStyles} from './common/InputField';
-import {SignupPageStyles} from './pages/SignupPage';
-import {ProductsSectionStyles} from './common/ProductsSection';
-import {AvatarStyles} from './common/MemberGravatar';
-import {MagicLinkStyles} from './pages/MagicLinkPage';
-import {PopupNotificationStyles} from './common/PopupNotification';
-import {OfferPageStyles} from './pages/OfferPage';
-import {FeedbackPageStyles} from './pages/FeedbackPage';
+import { AccountPlanPageStyles } from './pages/AccountPlanPage';
+import { InputFieldStyles } from './common/InputField';
+import { SignupPageStyles } from './pages/SignupPage';
+import { ProductsSectionStyles } from './common/ProductsSection';
+import { AvatarStyles } from './common/MemberGravatar';
+import { MagicLinkStyles } from './pages/MagicLinkPage';
+import { PopupNotificationStyles } from './common/PopupNotification';
+import { OfferPageStyles } from './pages/OfferPage';
+import { FeedbackPageStyles } from './pages/FeedbackPage';
 import EmailSuppressedPage from './pages/EmailSuppressedPage.css';
 import EmailSuppressionFAQ from './pages/EmailSuppressionFAQ.css';
 import EmailReceivingFAQ from './pages/EmailReceivingFAQ.css';
@@ -1202,27 +1202,27 @@ const MultipleProductsGlobalStyles = `
 }
 `;
 
-export function getFrameStyles({site}) {
-    const FrameStyle =
-        GlobalStyles +
-        FrameStyles +
-        AccountHomePageStyles +
-        AccountPlanPageStyles +
-        InputFieldStyles +
-        ProductsSectionStyles({site}) +
-        SwitchStyles +
-        ActionButtonStyles +
-        BackButtonStyles +
-        AvatarStyles +
-        MagicLinkStyles +
-        SignupPageStyles +
-        OfferPageStyles({site}) +
-        PopupNotificationStyles +
-        MobileStyles +
-        MultipleProductsGlobalStyles +
-        FeedbackPageStyles +
-        EmailSuppressedPage +
-        EmailSuppressionFAQ +
-        EmailReceivingFAQ;
-    return FrameStyle;
+export function getFrameStyles({ site }) {
+  const FrameStyle =
+    GlobalStyles +
+    FrameStyles +
+    AccountHomePageStyles +
+    AccountPlanPageStyles +
+    InputFieldStyles +
+    ProductsSectionStyles({ site }) +
+    SwitchStyles +
+    ActionButtonStyles +
+    BackButtonStyles +
+    AvatarStyles +
+    MagicLinkStyles +
+    SignupPageStyles +
+    OfferPageStyles({ site }) +
+    PopupNotificationStyles +
+    MobileStyles +
+    MultipleProductsGlobalStyles +
+    FeedbackPageStyles +
+    EmailSuppressedPage +
+    EmailSuppressionFAQ +
+    EmailReceivingFAQ;
+  return FrameStyle;
 }

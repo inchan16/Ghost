@@ -5,20 +5,20 @@ const constants = require('@tryghost/constants');
 const LocalStorageBase = require('./LocalStorageBase');
 
 const messages = {
-    notFound: 'Media file not found',
-    notFoundWithRef: 'Media file not found: {file}',
-    cannotRead: 'Could not read media file: {file}'
+  notFound: 'Media file not found',
+  notFoundWithRef: 'Media file not found: {file}',
+  cannotRead: 'Could not read media file: {file}',
 };
 
 class LocalMediaStore extends LocalStorageBase {
-    constructor() {
-        super({
-            storagePath: config.getContentPath('media'),
-            staticFileURLPrefix: constants.STATIC_MEDIA_URL_PREFIX,
-            siteUrl: config.getSiteUrl(),
-            errorMessages: messages
-        });
-    }
+  constructor() {
+    super({
+      storagePath: config.getContentPath('media'),
+      staticFileURLPrefix: constants.STATIC_MEDIA_URL_PREFIX,
+      siteUrl: config.getSiteUrl(),
+      errorMessages: messages,
+    });
+  }
 }
 
 module.exports = LocalMediaStore;

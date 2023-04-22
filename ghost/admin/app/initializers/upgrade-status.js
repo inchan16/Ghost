@@ -1,8 +1,8 @@
 export function initialize(application) {
-    application.inject('route', 'upgradeStatus', 'service:upgrade-status');
+  application.inject('route', 'upgradeStatus', 'service:upgrade-status');
 }
 
 export default {
-    name: 'upgrade-status',
-    initialize
+  name: 'upgrade-status',
+  initialize,
 };

@@ -34,13 +34,13 @@ import ShortcutsMixin from 'ghost-admin/mixins/shortcuts';
  * Find out more at the keymaster docs
  */
 export default Mixin.create(ShortcutsMixin, {
-    activate() {
-        this._super(...arguments);
-        this.registerShortcuts();
-    },
+  activate() {
+    this._super(...arguments);
+    this.registerShortcuts();
+  },
 
-    deactivate() {
-        this._super(...arguments);
-        this.removeShortcuts();
-    }
+  deactivate() {
+    this._super(...arguments);
+    this.removeShortcuts();
+  },
 });

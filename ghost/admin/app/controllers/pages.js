@@ -1,43 +1,53 @@
 import PostsController from './posts';
-import {action} from '@ember/object';
-import {inject as service} from '@ember/service';
+import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
 
-const TYPES = [{
+const TYPES = [
+  {
     name: 'All pages',
-    value: null
-}, {
+    value: null,
+  },
+  {
     name: 'Draft pages',
-    value: 'draft'
-}, {
+    value: 'draft',
+  },
+  {
     name: 'Published pages',
-    value: 'published'
-}, {
+    value: 'published',
+  },
+  {
     name: 'Scheduled pages',
-    value: 'scheduled'
-}, {
+    value: 'scheduled',
+  },
+  {
     name: 'Featured pages',
-    value: 'featured'
-}];
+    value: 'featured',
+  },
+];
 
-const ORDERS = [{
+const ORDERS = [
+  {
     name: 'Newest first',
-    value: null
-}, {
+    value: null,
+  },
+  {
     name: 'Oldest first',
-    value: 'published_at asc'
-}, {
+    value: 'published_at asc',
+  },
+  {
     name: 'Recently updated',
-    value: 'updated_at desc'
-}];
+    value: 'updated_at desc',
+  },
+];
 
 export default class PagesController extends PostsController {
-    @service router;
+  @service router;
 
-    availableTypes = TYPES;
-    availableOrders = ORDERS;
+  availableTypes = TYPES;
+  availableOrders = ORDERS;
 
-    @action
-    openEditor(page) {
-        this.router.transitionTo('editor.edit', 'page', page.get('id'));
-    }
+  @action
+  openEditor(page) {
+    this.router.transitionTo('editor.edit', 'page', page.get('id'));
+  }
 }

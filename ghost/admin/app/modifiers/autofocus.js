@@ -1,3 +1,3 @@
-import {modifier} from 'ember-modifier';
+import { modifier } from 'ember-modifier';
 
-export default modifier(element => element.focus(), {eager: false});
+export default modifier((element) => element.focus(), { eager: false });

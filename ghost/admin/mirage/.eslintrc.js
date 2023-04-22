@@ -1,6 +1,6 @@
 /* eslint-env node */
 module.exports = {
-    rules: {
-        'brace-style': 'off'
-    }
+  rules: {
+    'brace-style': 'off',
+  },
 };

@@ -1,4 +1,6 @@
-const debug = require('@tryghost/debug')('services:routing:renderer:render-post');
+const debug = require('@tryghost/debug')(
+  'services:routing:renderer:render-post'
+);
 const formatResponse = require('./format-response');
 const renderer = require('./renderer');
 /**
@@ -9,10 +11,14 @@ const renderer = require('./renderer');
  * @returns {Closure)
  */
 module.exports = function renderEntry(req, res) {
-    debug('renderEntry called');
-    return function renderEntryClosure(entry) {
-        // Format data 2 - 1 is in preview/entry
-        // Render
-        return renderer(req, res, formatResponse.entry(entry, res.routerOptions?.context));
-    };
+  debug('renderEntry called');
+  return function renderEntryClosure(entry) {
+    // Format data 2 - 1 is in preview/entry
+    // Render
+    return renderer(
+      req,
+      res,
+      formatResponse.entry(entry, res.routerOptions?.context)
+    );
+  };
 };

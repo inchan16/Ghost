@@ -1,5 +1,5 @@
 const DomainEvents = require('@tryghost/domain-events');
-const {URLResourceUpdatedEvent} = require('@tryghost/dynamic-routing-events');
+const { URLResourceUpdatedEvent } = require('@tryghost/dynamic-routing-events');
 const IndexMapGenerator = require('./index-generator');
 const PagesMapGenerator = require('./page-generator');
 const PostsMapGenerator = require('./post-generator');
@@ -10,82 +10,95 @@ const TagsMapGenerator = require('./tag-generator');
 const events = require('../../../server/lib/common/events');
 
 class SiteMapManager {
-    constructor(options) {
-        options = options || {};
+  constructor(options) {
+    options = options || {};
 
-        options.maxPerPage = options.maxPerPage || 50000;
+    options.maxPerPage = options.maxPerPage || 50000;
 
-        this.pages = options.pages || this.createPagesGenerator(options);
-        this.posts = options.posts || this.createPostsGenerator(options);
-        this.users = this.authors = options.authors || this.createUsersGenerator(options);
-        this.tags = options.tags || this.createTagsGenerator(options);
-        this.index = options.index || this.createIndexGenerator(options);
+    this.pages = options.pages || this.createPagesGenerator(options);
+    this.posts = options.posts || this.createPostsGenerator(options);
+    this.users = this.authors =
+      options.authors || this.createUsersGenerator(options);
+    this.tags = options.tags || this.createTagsGenerator(options);
+    this.index = options.index || this.createIndexGenerator(options);
 
-        events.on('router.created', (router) => {
-            if (router.name === 'StaticRoutesRouter') {
-                this.pages.addUrl(router.getRoute({absolute: true}), {id: router.identifier, staticRoute: true});
-            }
-
-            if (router.name === 'CollectionRouter') {
-                this.pages.addUrl(router.getRoute({absolute: true}), {id: router.identifier, staticRoute: false});
-            }
+    events.on('router.created', (router) => {
+      if (router.name === 'StaticRoutesRouter') {
+        this.pages.addUrl(router.getRoute({ absolute: true }), {
+          id: router.identifier,
+          staticRoute: true,
         });
+      }
 
-        DomainEvents.subscribe(URLResourceUpdatedEvent, (event) => {
-            this[event.data.resourceType].updateURL(event.data);
+      if (router.name === 'CollectionRouter') {
+        this.pages.addUrl(router.getRoute({ absolute: true }), {
+          id: router.identifier,
+          staticRoute: false,
         });
+      }
+    });
 
-        events.on('url.added', (obj) => {
-            this[obj.resource.config.type].addUrl(obj.url.absolute, obj.resource.data);
-        });
+    DomainEvents.subscribe(URLResourceUpdatedEvent, (event) => {
+      this[event.data.resourceType].updateURL(event.data);
+    });
 
-        events.on('url.removed', (obj) => {
-            this[obj.resource.config.type].removeUrl(obj.url.absolute, obj.resource.data);
-        });
+    events.on('url.added', (obj) => {
+      this[obj.resource.config.type].addUrl(
+        obj.url.absolute,
+        obj.resource.data
+      );
+    });
 
-        events.on('routers.reset', () => {
-            this.pages && this.pages.reset();
-            this.posts && this.posts.reset();
-            this.users && this.users.reset();
-            this.tags && this.tags.reset();
-        });
-    }
+    events.on('url.removed', (obj) => {
+      this[obj.resource.config.type].removeUrl(
+        obj.url.absolute,
+        obj.resource.data
+      );
+    });
 
-    createIndexGenerator(options) {
-        return new IndexMapGenerator({
-            types: {
-                pages: this.pages,
-                posts: this.posts,
-                authors: this.authors,
-                tags: this.tags
-            },
-            maxPerPage: options.maxPerPage
-        });
-    }
+    events.on('routers.reset', () => {
+      this.pages && this.pages.reset();
+      this.posts && this.posts.reset();
+      this.users && this.users.reset();
+      this.tags && this.tags.reset();
+    });
+  }
 
-    createPagesGenerator(options) {
-        return new PagesMapGenerator(options);
-    }
+  createIndexGenerator(options) {
+    return new IndexMapGenerator({
+      types: {
+        pages: this.pages,
+        posts: this.posts,
+        authors: this.authors,
+        tags: this.tags,
+      },
+      maxPerPage: options.maxPerPage,
+    });
+  }
 
-    createPostsGenerator(options) {
-        return new PostsMapGenerator(options);
-    }
+  createPagesGenerator(options) {
+    return new PagesMapGenerator(options);
+  }
 
-    createUsersGenerator(options) {
-        return new UsersMapGenerator(options);
-    }
+  createPostsGenerator(options) {
+    return new PostsMapGenerator(options);
+  }
 
-    createTagsGenerator(options) {
-        return new TagsMapGenerator(options);
-    }
+  createUsersGenerator(options) {
+    return new UsersMapGenerator(options);
+  }
 
-    getIndexXml() {
-        return this.index.getXml();
-    }
+  createTagsGenerator(options) {
+    return new TagsMapGenerator(options);
+  }
 
-    getSiteMapXml(type, page) {
-        return this[type].getXml(page);
-    }
+  getIndexXml() {
+    return this.index.getXml();
+  }
+
+  getSiteMapXml(type, page) {
+    return this[type].getXml(page);
+  }
 }
 
 module.exports = SiteMapManager;

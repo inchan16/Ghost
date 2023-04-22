@@ -1,113 +1,115 @@
 import moment from 'moment-timezone';
-import {Resource} from 'ember-could-get-used-to-this';
-import {TrackedArray} from 'tracked-built-ins';
-import {action} from '@ember/object';
-import {didCancel, task} from 'ember-concurrency';
-import {inject as service} from '@ember/service';
-import {tracked} from '@glimmer/tracking';
+import { Resource } from 'ember-could-get-used-to-this';
+import { TrackedArray } from 'tracked-built-ins';
+import { action } from '@ember/object';
+import { didCancel, task } from 'ember-concurrency';
+import { inject as service } from '@ember/service';
+import { tracked } from '@glimmer/tracking';
 
 export default class HistoryEventFetcher extends Resource {
-    @service ajax;
-    @service ghostPaths;
-    @service store;
+  @service ajax;
+  @service ghostPaths;
+  @service store;
 
-    @tracked data = new TrackedArray([]);
-    @tracked isLoading = false;
-    @tracked isError = false;
-    @tracked errorMessage = null;
-    @tracked hasReachedEnd = false;
+  @tracked data = new TrackedArray([]);
+  @tracked isLoading = false;
+  @tracked isError = false;
+  @tracked errorMessage = null;
+  @tracked hasReachedEnd = false;
 
-    cursor = null;
+  cursor = null;
 
-    get value() {
-        return {
-            isLoading: this.isLoading,
-            isError: this.isError,
-            errorMessage: this.errorMessage,
-            data: this.data,
-            loadNextPage: this.loadNextPage,
-            hasReachedEnd: this.hasReachedEnd
-        };
+  get value() {
+    return {
+      isLoading: this.isLoading,
+      isError: this.isError,
+      errorMessage: this.errorMessage,
+      data: this.data,
+      loadNextPage: this.loadNextPage,
+      hasReachedEnd: this.hasReachedEnd,
+    };
+  }
+
+  async setup() {
+    this.cursor = moment.utc().format('YYYY-MM-DD HH:mm:ss');
+    let filter = `created_at:<'${this.cursor}'`;
+
+    if (this.args.named.filter) {
+      filter += `+${this.args.named.filter}`;
     }
 
-    async setup() {
-        this.cursor = moment.utc().format('YYYY-MM-DD HH:mm:ss');
-        let filter = `created_at:<'${this.cursor}'`;
+    try {
+      await this.loadEventsTask.perform({ filter });
+    } catch (e) {
+      if (!didCancel(e)) {
+        // re-throw the non-cancelation error
+        throw e;
+      }
+    }
+  }
 
-        if (this.args.named.filter) {
-            filter += `+${this.args.named.filter}`;
-        }
+  @action
+  loadNextPage() {
+    // NOTE: assumes data is always ordered by created_at desc
+    const lastEvent = this.data[this.data.length - 1];
 
-        try {
-            await this.loadEventsTask.perform({filter});
-        } catch (e) {
-            if (!didCancel(e)) {
-                // re-throw the non-cancelation error
-                throw e;
-            }
-        }
+    if (!lastEvent?.created_at) {
+      this.hasReachedEnd = true;
+      return;
     }
 
-    @action
-    loadNextPage() {
-        // NOTE: assumes data is always ordered by created_at desc
-        const lastEvent = this.data[this.data.length - 1];
+    const cursor = moment
+      .utc(lastEvent.created_at)
+      .format('YYYY-MM-DD HH:mm:ss');
 
-        if (!lastEvent?.created_at) {
-            this.hasReachedEnd = true;
-            return;
-        }
-
-        const cursor = moment.utc(lastEvent.created_at).format('YYYY-MM-DD HH:mm:ss');
-
-        if (cursor === this.cursor) {
-            this.hasReachedEnd = true;
-            return;
-        }
-
-        this.cursor = cursor;
-        let filter = `created_at:<'${this.cursor}'`;
-
-        if (this.args.named.filter) {
-            filter += `+${this.args.named.filter}`;
-        }
-
-        this.loadEventsTask.perform({filter});
+    if (cursor === this.cursor) {
+      this.hasReachedEnd = true;
+      return;
     }
 
-    @task
-    *loadEventsTask(queryParams) {
-        try {
-            this.isLoading = true;
+    this.cursor = cursor;
+    let filter = `created_at:<'${this.cursor}'`;
 
-            const url = this.ghostPaths.url.api('actions');
-            const data = Object.assign({}, queryParams, {
-                include: 'actor,resource',
-                limit: this.args.named.pageSize
-            });
-            const {actions} = yield this.ajax.request(url, {data});
-
-            if (actions.length < data.limit) {
-                this.hasReachedEnd = true;
-            }
-
-            actions.forEach((a) => {
-                a.context = JSON.parse(a.context);
-            });
-
-            this.data.push(...actions);
-        } catch (e) {
-            this.isError = true;
-
-            const errorMessage = e.payload?.errors?.[0]?.message;
-            if (errorMessage) {
-                this.errorMessage = errorMessage;
-            }
-
-            // TODO: log to Sentry
-            console.error(e); // eslint-disable-line
-        } finally {
-            this.isLoading = false;
-        }
+    if (this.args.named.filter) {
+      filter += `+${this.args.named.filter}`;
     }
+
+    this.loadEventsTask.perform({ filter });
+  }
+
+  @task
+  *loadEventsTask(queryParams) {
+    try {
+      this.isLoading = true;
+
+      const url = this.ghostPaths.url.api('actions');
+      const data = Object.assign({}, queryParams, {
+        include: 'actor,resource',
+        limit: this.args.named.pageSize,
+      });
+      const { actions } = yield this.ajax.request(url, { data });
+
+      if (actions.length < data.limit) {
+        this.hasReachedEnd = true;
+      }
+
+      actions.forEach((a) => {
+        a.context = JSON.parse(a.context);
+      });
+
+      this.data.push(...actions);
+    } catch (e) {
+      this.isError = true;
+
+      const errorMessage = e.payload?.errors?.[0]?.message;
+      if (errorMessage) {
+        this.errorMessage = errorMessage;
+      }
+
+      // TODO: log to Sentry
+      console.error(e); // eslint-disable-line
+    } finally {
+      this.isLoading = false;
+    }
+  }
 }

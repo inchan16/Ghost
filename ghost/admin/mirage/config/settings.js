@@ -1,40 +1,40 @@
 export default function mockSettings(server) {
-    server.get('/settings/', function ({db}, {queryParams}) {
-        let {group} = queryParams;
-        let filters = group.split(',');
-        let settings = [];
+  server.get('/settings/', function ({ db }, { queryParams }) {
+    let { group } = queryParams;
+    let filters = group.split(',');
+    let settings = [];
 
-        if (!db.settings.length) {
-            server.loadFixtures('settings');
-        }
+    if (!db.settings.length) {
+      server.loadFixtures('settings');
+    }
 
-        filters.forEach((groupFilter) => {
-            settings.pushObjects(db.settings.where({group: groupFilter}));
-        });
-
-        return {
-            settings,
-            meta: {filters: {group}}
-        };
+    filters.forEach((groupFilter) => {
+      settings.pushObjects(db.settings.where({ group: groupFilter }));
     });
 
-    server.put('/settings/', function ({db}, {requestBody}) {
-        let newSettings = JSON.parse(requestBody).settings;
+    return {
+      settings,
+      meta: { filters: { group } },
+    };
+  });
 
-        newSettings.forEach((newSetting) => {
-            let {key} = newSetting;
+  server.put('/settings/', function ({ db }, { requestBody }) {
+    let newSettings = JSON.parse(requestBody).settings;
 
-            if (db.settings.where({key}).length > 0) {
-                db.settings.update({key}, newSetting);
-            } else {
-                newSetting.group = newSetting.group || 'site';
-                db.settings.insert(newSetting);
-            }
-        });
+    newSettings.forEach((newSetting) => {
+      let { key } = newSetting;
 
-        return {
-            meta: {},
-            settings: db.settings
-        };
+      if (db.settings.where({ key }).length > 0) {
+        db.settings.update({ key }, newSetting);
+      } else {
+        newSetting.group = newSetting.group || 'site';
+        db.settings.insert(newSetting);
+      }
     });
+
+    return {
+      meta: {},
+      settings: db.settings,
+    };
+  });
 }

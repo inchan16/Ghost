@@ -1,18 +1,18 @@
 import Controller from '@ember/controller';
-import {inject as service} from '@ember/service';
-import {task} from 'ember-concurrency';
-import {tracked} from '@glimmer/tracking';
+import { inject as service } from '@ember/service';
+import { task } from 'ember-concurrency';
+import { tracked } from '@glimmer/tracking';
 
 export default class NewslettersController extends Controller {
-    @service settings;
+  @service settings;
 
-    queryParams = ['verifyEmail'];
+  queryParams = ['verifyEmail'];
 
-    @tracked verifyEmail = null;
+  @tracked verifyEmail = null;
 
-    @task({drop: true})
-    *saveSettings() {
-        const response = yield this.settings.save();
-        return response;
-    }
+  @task({ drop: true })
+  *saveSettings() {
+    const response = yield this.settings.save();
+    return response;
+  }
 }

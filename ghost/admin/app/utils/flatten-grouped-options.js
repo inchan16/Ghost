@@ -1,15 +1,15 @@
 export default function flattenGroupedOptions(options) {
-    const flatOptions = [];
+  const flatOptions = [];
 
-    function getOptions(option) {
-        if (option.options) {
-            return option.options.forEach(getOptions);
-        }
-
-        flatOptions.push(option);
+  function getOptions(option) {
+    if (option.options) {
+      return option.options.forEach(getOptions);
     }
 
-    options.forEach(getOptions);
+    flatOptions.push(option);
+  }
 
-    return flatOptions;
+  options.forEach(getOptions);
+
+  return flatOptions;
 }

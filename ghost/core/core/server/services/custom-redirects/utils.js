@@ -6,9 +6,12 @@ const moment = require('moment-timezone');
  * @returns {string}
  */
 const getBackupRedirectsFilePath = (filePath) => {
-    const {dir, name, ext} = path.parse(filePath);
+  const { dir, name, ext } = path.parse(filePath);
 
-    return path.join(dir, `${name}-${moment().format('YYYY-MM-DD-HH-mm-ss')}${ext}`);
+  return path.join(
+    dir,
+    `${name}-${moment().format('YYYY-MM-DD-HH-mm-ss')}${ext}`
+  );
 };
 
 module.exports.getBackupRedirectsFilePath = getBackupRedirectsFilePath;

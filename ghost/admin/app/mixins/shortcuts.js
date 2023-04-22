@@ -1,7 +1,7 @@
 /* global key */
 import Mixin from '@ember/object/mixin';
-import {run} from '@ember/runloop';
-import {typeOf} from '@ember/utils';
+import { run } from '@ember/runloop';
+import { typeOf } from '@ember/utils';
 
 import * as shortcutsCache from '../utils/shortcuts';
 
@@ -9,7 +9,7 @@ import * as shortcutsCache from '../utils/shortcuts';
 // even inside of
 // input, textarea, and select.
 key.filter = function () {
-    return true;
+  return true;
 };
 
 key.setScope('default');
@@ -46,44 +46,43 @@ key.setScope('default');
  * Find out more at the keymaster docs
  */
 export default Mixin.create({
+  registerShortcuts() {
+    let shortcuts = this.shortcuts;
 
-    registerShortcuts() {
-        let shortcuts = this.shortcuts;
+    Object.keys(shortcuts).forEach((shortcut) => {
+      let scope = shortcuts[shortcut].scope || 'default';
+      let action = shortcuts[shortcut];
+      let options;
 
-        Object.keys(shortcuts).forEach((shortcut) => {
-            let scope = shortcuts[shortcut].scope || 'default';
-            let action = shortcuts[shortcut];
-            let options;
+      if (typeOf(action) !== 'string') {
+        options = action.options;
+        action = action.action;
+      }
 
-            if (typeOf(action) !== 'string') {
-                options = action.options;
-                action = action.action;
-            }
+      shortcutsCache.register(shortcut);
 
-            shortcutsCache.register(shortcut);
-
-            key(shortcut, scope, (event) => {
-                // stop things like ctrl+s from actually opening a save dialog
-                event.preventDefault();
-                run(this, function () {
-                    this.send(action, options);
-                });
-            });
+      key(shortcut, scope, (event) => {
+        // stop things like ctrl+s from actually opening a save dialog
+        event.preventDefault();
+        run(this, function () {
+          this.send(action, options);
         });
-    },
+      });
+    });
+  },
 
-    removeShortcuts() {
-        let shortcuts = this.shortcuts;
+  removeShortcuts() {
+    let shortcuts = this.shortcuts;
 
-        Object.keys(shortcuts).forEach((shortcut) => {
-            let scope = shortcuts[shortcut].scope || 'default';
-            shortcutsCache.unregister(shortcut);
-            key.unbind(shortcut, scope);
-        });
-    },
+    Object.keys(shortcuts).forEach((shortcut) => {
+      let scope = shortcuts[shortcut].scope || 'default';
+      shortcutsCache.unregister(shortcut);
+      key.unbind(shortcut, scope);
+    });
+  },
 
-    willDestroy() {
-        this._super(...arguments);
-        this.removeShortcuts();
-    }
+  willDestroy() {
+    this._super(...arguments);
+    this.removeShortcuts();
+  },
 });

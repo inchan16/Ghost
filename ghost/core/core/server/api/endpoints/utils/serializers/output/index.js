@@ -5,135 +5,135 @@
 /* eslint-disable max-lines */
 
 module.exports = {
-    get all() {
-        return require('./all');
-    },
+  get all() {
+    return require('./all');
+  },
 
-    get default() {
-        return require('./default');
-    },
+  get default() {
+    return require('./default');
+  },
 
-    get comments() {
-        return require('./comments');
-    },
+  get comments() {
+    return require('./comments');
+  },
 
-    get authentication() {
-        return require('./authentication');
-    },
+  get authentication() {
+    return require('./authentication');
+  },
 
-    get db() {
-        return require('./db');
-    },
+  get db() {
+    return require('./db');
+  },
 
-    get explore() {
-        return require('./explore');
-    },
+  get explore() {
+    return require('./explore');
+  },
 
-    get pages() {
-        return require('./pages');
-    },
+  get pages() {
+    return require('./pages');
+  },
 
-    get redirects() {
-        return require('./redirects');
-    },
+  get redirects() {
+    return require('./redirects');
+  },
 
-    get roles() {
-        return require('./roles');
-    },
+  get roles() {
+    return require('./roles');
+  },
 
-    get slugs() {
-        return require('./slugs');
-    },
+  get slugs() {
+    return require('./slugs');
+  },
 
-    get schedules() {
-        return require('./schedules');
-    },
+  get schedules() {
+    return require('./schedules');
+  },
 
-    get posts() {
-        return require('./posts');
-    },
+  get posts() {
+    return require('./posts');
+  },
 
-    get settings() {
-        return require('./settings');
-    },
+  get settings() {
+    return require('./settings');
+  },
 
-    get notifications() {
-        return require('./notifications');
-    },
+  get notifications() {
+    return require('./notifications');
+  },
 
-    get mail() {
-        return require('./mail');
-    },
+  get mail() {
+    return require('./mail');
+  },
 
-    get members() {
-        return require('./members');
-    },
+  get members() {
+    return require('./members');
+  },
 
-    get tiers() {
-        return require('./tiers');
-    },
+  get tiers() {
+    return require('./tiers');
+  },
 
-    get images() {
-        return require('./images');
-    },
+  get images() {
+    return require('./images');
+  },
 
-    get media() {
-        return require('./media');
-    },
+  get media() {
+    return require('./media');
+  },
 
-    get files() {
-        return require('./files');
-    },
+  get files() {
+    return require('./files');
+  },
 
-    get users() {
-        return require('./users');
-    },
+  get users() {
+    return require('./users');
+  },
 
-    get previews() {
-        return require('./previews');
-    },
+  get previews() {
+    return require('./previews');
+  },
 
-    get email_post() {
-        return require('./email-posts');
-    },
+  get email_post() {
+    return require('./email-posts');
+  },
 
-    get emails() {
-        return require('./emails');
-    },
+  get emails() {
+    return require('./emails');
+  },
 
-    get oembed() {
-        return require('./oembed');
-    },
+  get oembed() {
+    return require('./oembed');
+  },
 
-    get config() {
-        return require('./config');
-    },
+  get config() {
+    return require('./config');
+  },
 
-    get themes() {
-        return require('./themes');
-    },
+  get themes() {
+    return require('./themes');
+  },
 
-    get site() {
-        return require('./site');
-    },
+  get site() {
+    return require('./site');
+  },
 
-    get custom_theme_settings() {
-        return require('./custom-theme-settings');
-    },
+  get custom_theme_settings() {
+    return require('./custom-theme-settings');
+  },
 
-    get slack() {
-        return require('./slack');
-    },
+  get slack() {
+    return require('./slack');
+  },
 
-    get session() {
-        return require('./session');
-    },
+  get session() {
+    return require('./session');
+  },
 
-    get members_stripe_connect() {
-        return require('./members-stripe-connect');
-    },
+  get members_stripe_connect() {
+    return require('./members-stripe-connect');
+  },
 
-    get links() {
-        return require('./links');
-    }
+  get links() {
+    return require('./links');
+  },
 };

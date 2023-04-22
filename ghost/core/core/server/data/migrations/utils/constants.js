@@ -1,3 +1,3 @@
 module.exports = {
-    MIGRATION_USER: 1
+  MIGRATION_USER: 1,
 };

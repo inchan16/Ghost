@@ -7,26 +7,26 @@ const Promise = require('bluebird');
 
 // The default settings for a default post query
 const queryDefaults = {
-    type: 'browse',
-    resource: 'posts',
-    controller: 'postsPublic',
-    options: {}
+  type: 'browse',
+  resource: 'posts',
+  controller: 'postsPublic',
+  options: {},
 };
 
 /**
  * The theme expects to have access to the relations by default e.g. {{post.authors}}
  */
 const defaultQueryOptions = {
-    options: {
-        include: 'authors,tags,tiers'
-    }
+  options: {
+    include: 'authors,tags,tiers',
+  },
 };
 
 const defaultDataQueryOptions = {
-    post: _.cloneDeep(defaultQueryOptions),
-    page: _.cloneDeep(defaultQueryOptions),
-    tag: null,
-    author: null
+  post: _.cloneDeep(defaultQueryOptions),
+  page: _.cloneDeep(defaultQueryOptions),
+  tag: null,
+  author: null,
 };
 
 const defaultPostQuery = _.cloneDeep(queryDefaults);
@@ -44,20 +44,24 @@ defaultPostQuery.options = defaultQueryOptions.options;
  * @returns {Promise}
  */
 function processQuery(query, slugParam, locals) {
-    const api = require('../proxy').api;
+  const api = require('../proxy').api;
 
-    query = _.cloneDeep(query);
+  query = _.cloneDeep(query);
 
-    _.defaultsDeep(query, queryDefaults);
+  _.defaultsDeep(query, queryDefaults);
 
-    // Replace any slugs, see TaxonomyRouter. We replace any '%s' by the slug
-    _.each(query.options, function (option, name) {
-        query.options[name] = _.isString(option) ? option.replace(/%s/g, slugParam) : option;
-    });
+  // Replace any slugs, see TaxonomyRouter. We replace any '%s' by the slug
+  _.each(query.options, function (option, name) {
+    query.options[name] = _.isString(option)
+      ? option.replace(/%s/g, slugParam)
+      : option;
+  });
 
-    query.options.context = {member: locals.member};
+  query.options.context = { member: locals.member };
 
-    return (api[query.controller] || api[query.resource])[query.type](query.options);
+  return (api[query.controller] || api[query.resource])[query.type](
+    query.options
+  );
 }
 
 /**
@@ -68,56 +72,55 @@ function processQuery(query, slugParam, locals) {
  * Does a first round of formatting on the response, and returns
  */
 function fetchData(pathOptions, routerOptions, locals) {
-    pathOptions = pathOptions || {};
-    routerOptions = routerOptions || {};
+  pathOptions = pathOptions || {};
+  routerOptions = routerOptions || {};
 
-    let postQuery = _.cloneDeep(defaultPostQuery);
-    let props = {};
+  let postQuery = _.cloneDeep(defaultPostQuery);
+  let props = {};
 
-    if (routerOptions.filter) {
-        postQuery.options.filter = routerOptions.filter;
+  if (routerOptions.filter) {
+    postQuery.options.filter = routerOptions.filter;
+  }
+
+  if (routerOptions.order) {
+    postQuery.options.order = routerOptions.order;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(pathOptions, 'page')) {
+    postQuery.options.page = pathOptions.page;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(pathOptions, 'limit')) {
+    postQuery.options.limit = pathOptions.limit;
+  }
+
+  // CASE: always fetch post entries
+  // The filter can in theory contain a "%s" e.g. filter="primary_tag:%s"
+  props.posts = processQuery(postQuery, pathOptions.slug, locals);
+
+  // CASE: fetch more data defined by the router e.g. tags, authors - see TaxonomyRouter
+  _.each(routerOptions.data, function (query, name) {
+    const dataQueryOptions = _.merge(query, defaultDataQueryOptions[name]);
+    props[name] = processQuery(dataQueryOptions, pathOptions.slug, locals);
+  });
+
+  return Promise.props(props).then(function formatResponse(results) {
+    const response = _.cloneDeep(results.posts);
+
+    if (routerOptions.data) {
+      response.data = {};
+
+      _.each(routerOptions.data, function (config, name) {
+        response.data[name] = results[name][config.resource];
+
+        if (config.type === 'browse') {
+          response.data[name].meta = results[name].meta;
+        }
+      });
     }
 
-    if (routerOptions.order) {
-        postQuery.options.order = routerOptions.order;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(pathOptions, 'page')) {
-        postQuery.options.page = pathOptions.page;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(pathOptions, 'limit')) {
-        postQuery.options.limit = pathOptions.limit;
-    }
-
-    // CASE: always fetch post entries
-    // The filter can in theory contain a "%s" e.g. filter="primary_tag:%s"
-    props.posts = processQuery(postQuery, pathOptions.slug, locals);
-
-    // CASE: fetch more data defined by the router e.g. tags, authors - see TaxonomyRouter
-    _.each(routerOptions.data, function (query, name) {
-        const dataQueryOptions = _.merge(query, defaultDataQueryOptions[name]);
-        props[name] = processQuery(dataQueryOptions, pathOptions.slug, locals);
-    });
-
-    return Promise.props(props)
-        .then(function formatResponse(results) {
-            const response = _.cloneDeep(results.posts);
-
-            if (routerOptions.data) {
-                response.data = {};
-
-                _.each(routerOptions.data, function (config, name) {
-                    response.data[name] = results[name][config.resource];
-
-                    if (config.type === 'browse') {
-                        response.data[name].meta = results[name].meta;
-                    }
-                });
-            }
-
-            return response;
-        });
+    return response;
+  });
 }
 
 module.exports = fetchData;

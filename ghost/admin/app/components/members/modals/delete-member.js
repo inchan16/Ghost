@@ -1,47 +1,49 @@
 import Component from '@glimmer/component';
-import {inject as service} from '@ember/service';
-import {task} from 'ember-concurrency';
-import {tracked} from '@glimmer/tracking';
+import { inject as service } from '@ember/service';
+import { task } from 'ember-concurrency';
+import { tracked } from '@glimmer/tracking';
 
 export default class DeleteMemberModal extends Component {
-    @service notifications;
+  @service notifications;
 
-    @tracked shouldCancelSubscriptions = false;
+  @tracked shouldCancelSubscriptions = false;
 
-    get member() {
-        return this.args.data.member;
+  get member() {
+    return this.args.data.member;
+  }
+
+  get hasActiveStripeSubscriptions() {
+    const subscriptions = this.member.get('subscriptions');
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return false;
     }
 
-    get hasActiveStripeSubscriptions() {
-        const subscriptions = this.member.get('subscriptions');
+    const firstActiveStripeSubscription = subscriptions.find((subscription) => {
+      return ['active', 'trialing', 'unpaid', 'past_due'].includes(
+        subscription.status
+      );
+    });
 
-        if (!subscriptions || subscriptions.length === 0) {
-            return false;
-        }
+    return firstActiveStripeSubscription !== undefined;
+  }
 
-        const firstActiveStripeSubscription = subscriptions.find((subscription) => {
-            return ['active', 'trialing', 'unpaid', 'past_due'].includes(subscription.status);
-        });
+  @task({ drop: true })
+  *deleteMemberTask() {
+    const options = {
+      adapterOptions: {
+        cancel: this.shouldCancelSubscriptions,
+      },
+    };
 
-        return firstActiveStripeSubscription !== undefined;
+    try {
+      yield this.member.destroyRecord(options);
+      this.args.data.afterDelete?.();
+      this.args.close(true);
+    } catch (e) {
+      this.notifications.showAPIError(e, { key: 'member.delete' });
+      this.args.close(false);
+      throw e;
     }
-
-    @task({drop: true})
-    *deleteMemberTask() {
-        const options = {
-            adapterOptions: {
-                cancel: this.shouldCancelSubscriptions
-            }
-        };
-
-        try {
-            yield this.member.destroyRecord(options);
-            this.args.data.afterDelete?.();
-            this.args.close(true);
-        } catch (e) {
-            this.notifications.showAPIError(e, {key: 'member.delete'});
-            this.args.close(false);
-            throw e;
-        }
-    }
+  }
 }

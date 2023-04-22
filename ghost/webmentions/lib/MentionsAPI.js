@@ -90,151 +90,155 @@ const Mention = require('./Mention');
  */
 
 module.exports = class MentionsAPI {
-    /** @type {IMentionRepository} */
-    #repository;
-    /** @type {IResourceService} */
-    #resourceService;
-    /** @type {IRoutingService} */
-    #routingService;
-    /** @type {IWebmentionMetadata} */
-    #webmentionMetadata;
+  /** @type {IMentionRepository} */
+  #repository;
+  /** @type {IResourceService} */
+  #resourceService;
+  /** @type {IRoutingService} */
+  #routingService;
+  /** @type {IWebmentionMetadata} */
+  #webmentionMetadata;
 
-    /**
-     * @param {object} deps
-     * @param {IMentionRepository} deps.repository
-     * @param {IResourceService} deps.resourceService
-     * @param {IRoutingService} deps.routingService
-     * @param {IWebmentionMetadata} deps.webmentionMetadata
-     */
-    constructor(deps) {
-        this.#repository = deps.repository;
-        this.#resourceService = deps.resourceService;
-        this.#routingService = deps.routingService;
-        this.#webmentionMetadata = deps.webmentionMetadata;
+  /**
+   * @param {object} deps
+   * @param {IMentionRepository} deps.repository
+   * @param {IResourceService} deps.resourceService
+   * @param {IRoutingService} deps.routingService
+   * @param {IWebmentionMetadata} deps.webmentionMetadata
+   */
+  constructor(deps) {
+    this.#repository = deps.repository;
+    this.#resourceService = deps.resourceService;
+    this.#routingService = deps.routingService;
+    this.#webmentionMetadata = deps.webmentionMetadata;
+  }
+
+  /**
+   * @param {Date} startDate
+   * @param {Date} endDate
+   * @returns {Promise<MentionReport>}
+   */
+  async getMentionReport(startDate, endDate) {
+    const mentions = await this.#repository.getAll({
+      filter: `created_at:>${startDate.toISOString()}+created_at:<${endDate.toISOString()}`,
+    });
+
+    const report = {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      mentions,
+    };
+
+    return report;
+  }
+
+  /**
+   * @param {object} options
+   * @returns {Promise<Page<Mention>>}
+   */
+  async listMentions(options) {
+    /** @type {GetPageOptions} */
+    let pageOptions;
+
+    if (options.limit === 'all') {
+      pageOptions = {
+        filter: options.filter,
+        limit: options.limit,
+        order: options.order,
+        unique: options.unique ?? false,
+      };
+    } else {
+      pageOptions = {
+        filter: options.filter,
+        limit: options.limit,
+        page: options.page,
+        order: options.order,
+        unique: options.unique ?? false,
+      };
     }
 
-    /**
-     * @param {Date} startDate
-     * @param {Date} endDate
-     * @returns {Promise<MentionReport>}
-     */
-    async getMentionReport(startDate, endDate) {
-        const mentions = await this.#repository.getAll({
-            filter: `created_at:>${startDate.toISOString()}+created_at:<${endDate.toISOString()}`
+    const page = await this.#repository.getPage(pageOptions);
+
+    return page;
+  }
+
+  /**
+   * @param {object} webmention
+   * @param {URL} webmention.source
+   * @param {URL} webmention.target
+   * @param {Object<string, any>} webmention.payload
+   *
+   * @returns {Promise<Mention>}
+   */
+  async processWebmention(webmention) {
+    let mention = await this.#repository.getBySourceAndTarget(
+      webmention.source,
+      webmention.target
+    );
+
+    const targetExists = await this.#routingService.pageExists(
+      webmention.target
+    );
+
+    if (!targetExists) {
+      if (!mention) {
+        throw new errors.BadRequestError({
+          message: `${webmention.target} is not a valid URL for this site.`,
         });
-
-        const report = {
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
-            mentions
-        };
-
-        return report;
+      } else {
+        mention.delete();
+      }
     }
 
-    /**
-     * @param {object} options
-     * @returns {Promise<Page<Mention>>}
-     */
-    async listMentions(options) {
-        /** @type {GetPageOptions} */
-        let pageOptions;
-
-        if (options.limit === 'all') {
-            pageOptions = {
-                filter: options.filter,
-                limit: options.limit,
-                order: options.order,
-                unique: options.unique ?? false
-            };
-        } else {
-            pageOptions = {
-                filter: options.filter,
-                limit: options.limit,
-                page: options.page,
-                order: options.order,
-                unique: options.unique ?? false
-            };
-        }
-
-        const page = await this.#repository.getPage(pageOptions);
-
-        return page;
+    const resourceInfo = await this.#resourceService.getByURL(
+      webmention.target
+    );
+    let metadata;
+    try {
+      metadata = await this.#webmentionMetadata.fetch(webmention.source);
+      if (mention) {
+        mention.setSourceMetadata({
+          sourceTitle: metadata.title,
+          sourceSiteTitle: metadata.siteTitle,
+          sourceAuthor: metadata.author,
+          sourceExcerpt: metadata.excerpt,
+          sourceFavicon: metadata.favicon,
+          sourceFeaturedImage: metadata.image,
+        });
+      }
+    } catch (err) {
+      if (!mention) {
+        throw err;
+      }
+      mention.delete();
     }
 
-    /**
-     * @param {object} webmention
-     * @param {URL} webmention.source
-     * @param {URL} webmention.target
-     * @param {Object<string, any>} webmention.payload
-     *
-     * @returns {Promise<Mention>}
-     */
-    async processWebmention(webmention) {
-        let mention = await this.#repository.getBySourceAndTarget(
-            webmention.source,
-            webmention.target
-        );
-
-        const targetExists = await this.#routingService.pageExists(webmention.target);
-
-        if (!targetExists) {
-            if (!mention) {
-                throw new errors.BadRequestError({
-                    message: `${webmention.target} is not a valid URL for this site.`
-                });
-            } else {
-                mention.delete();
-            }
-        }
-
-        const resourceInfo = await this.#resourceService.getByURL(webmention.target);
-        let metadata;
-        try {
-            metadata = await this.#webmentionMetadata.fetch(webmention.source);
-            if (mention) {
-                mention.setSourceMetadata({
-                    sourceTitle: metadata.title,
-                    sourceSiteTitle: metadata.siteTitle,
-                    sourceAuthor: metadata.author,
-                    sourceExcerpt: metadata.excerpt,
-                    sourceFavicon: metadata.favicon,
-                    sourceFeaturedImage: metadata.image
-                });
-            }
-        } catch (err) {
-            if (!mention) {
-                throw err;
-            }
-            mention.delete();
-        }
-
-        if (!mention) {
-            mention = await Mention.create({
-                source: webmention.source,
-                target: webmention.target,
-                timestamp: new Date(),
-                payload: webmention.payload,
-                resourceId: resourceInfo.id ? resourceInfo.id.toHexString() : null,
-                resourceType: resourceInfo.type,
-                sourceTitle: metadata.title,
-                sourceSiteTitle: metadata.siteTitle,
-                sourceAuthor: metadata.author,
-                sourceExcerpt: metadata.excerpt,
-                sourceFavicon: metadata.favicon,
-                sourceFeaturedImage: metadata.image
-            });
-        }
-
-        if (metadata?.body) {
-            try {
-                mention.verify(metadata.body);
-            } catch (e) {
-                logging.error(e);
-            }
-        }
-
-        await this.#repository.save(mention);
-        return mention;
+    if (!mention) {
+      mention = await Mention.create({
+        source: webmention.source,
+        target: webmention.target,
+        timestamp: new Date(),
+        payload: webmention.payload,
+        resourceId: resourceInfo.id ? resourceInfo.id.toHexString() : null,
+        resourceType: resourceInfo.type,
+        sourceTitle: metadata.title,
+        sourceSiteTitle: metadata.siteTitle,
+        sourceAuthor: metadata.author,
+        sourceExcerpt: metadata.excerpt,
+        sourceFavicon: metadata.favicon,
+        sourceFeaturedImage: metadata.image,
+      });
     }
+
+    if (metadata?.body) {
+      try {
+        mention.verify(metadata.body);
+      } catch (e) {
+        logging.error(e);
+      }
+    }
+
+    await this.#repository.save(mention);
+    return mention;
+  }
 };

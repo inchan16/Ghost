@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-card-callout';
+export { default } from 'koenig-editor/components/koenig-card-callout';

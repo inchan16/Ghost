@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/kg-action-bar';
+export { default } from 'koenig-editor/components/kg-action-bar';

@@ -1,5 +1,5 @@
-import {GlobalStyles} from './Global.styles';
-import {AvatarStyles} from './common/MemberGravatar';
+import { GlobalStyles } from './Global.styles';
+import { AvatarStyles } from './common/MemberGravatar';
 
 const TriggerButtonStyles = `
     .gh-portal-triggerbtn-wrapper {
@@ -77,9 +77,6 @@ const TriggerButtonStyles = `
     }
 `;
 
-const TriggerButtonStyle = 
-    GlobalStyles +
-    TriggerButtonStyles + 
-    AvatarStyles;
+const TriggerButtonStyle = GlobalStyles + TriggerButtonStyles + AvatarStyles;
 
 export default TriggerButtonStyle;

@@ -1,6 +1,6 @@
 module.exports = function (data) {
-    // Be careful when you indent the email, because whitespaces are visible in emails!
-    return `Hey there,
+  // Be careful when you indent the email, because whitespaces are visible in emails!
+  return `Hey there,
 
 ${data.reporter} has reported the comment below on ${data.postTitle}. This comment will remain visible until you choose to remove it, which can be done directly on the post.
 

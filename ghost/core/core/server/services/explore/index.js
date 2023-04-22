@@ -9,10 +9,10 @@ const StripeService = require('../stripe');
 const models = require('../../models');
 
 module.exports = new ExploreService({
-    MembersService,
-    PostsService,
-    PublicConfigService,
-    StatsService,
-    StripeService,
-    UserModel: models.User
+  MembersService,
+  PostsService,
+  PublicConfigService,
+  StatsService,
+  StripeService,
+  UserModel: models.User,
 });

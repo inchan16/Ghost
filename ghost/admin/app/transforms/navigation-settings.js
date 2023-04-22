@@ -1,39 +1,41 @@
 import NavigationItem from 'ghost-admin/models/navigation-item';
 import Transform from '@ember-data/serializer/transform';
-import {A as emberA, isArray as isEmberArray} from '@ember/array';
+import { A as emberA, isArray as isEmberArray } from '@ember/array';
 
 export default class NavigationSettings extends Transform {
-    deserialize(serialized, options) {
-        let navItems, settingsArray;
+  deserialize(serialized, options) {
+    let navItems, settingsArray;
 
-        try {
-            settingsArray = JSON.parse(serialized) || [];
-        } catch (e) {
-            settingsArray = [];
-        }
-
-        navItems = settingsArray.map((itemDetails) => {
-            itemDetails.isSecondary = options && options.isSecondary || false;
-            return NavigationItem.create(itemDetails);
-        });
-
-        return emberA(navItems);
+    try {
+      settingsArray = JSON.parse(serialized) || [];
+    } catch (e) {
+      settingsArray = [];
     }
 
-    serialize(deserialized) {
-        let settingsArray;
+    navItems = settingsArray.map((itemDetails) => {
+      itemDetails.isSecondary = (options && options.isSecondary) || false;
+      return NavigationItem.create(itemDetails);
+    });
 
-        if (isEmberArray(deserialized)) {
-            settingsArray = deserialized.map((item) => {
-                let label = item.label.trim();
-                let url = item.url.trim();
+    return emberA(navItems);
+  }
 
-                return {label, url};
-            }).compact();
-        } else {
-            settingsArray = [];
-        }
+  serialize(deserialized) {
+    let settingsArray;
 
-        return JSON.stringify(settingsArray);
+    if (isEmberArray(deserialized)) {
+      settingsArray = deserialized
+        .map((item) => {
+          let label = item.label.trim();
+          let url = item.url.trim();
+
+          return { label, url };
+        })
+        .compact();
+    } else {
+      settingsArray = [];
     }
+
+    return JSON.stringify(settingsArray);
+  }
 }

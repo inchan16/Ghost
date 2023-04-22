@@ -1,14 +1,14 @@
-const {ValidationError} = require('@tryghost/errors');
+const { ValidationError } = require('@tryghost/errors');
 
 class InvalidPropError extends ValidationError {
-    /** @param {any} options */
-    constructor(options) {
-        super({
-            statusCode: 400,
-            ...options
-        });
-        this.errorType = this.constructor.name;
-    }
+  /** @param {any} options */
+  constructor(options) {
+    super({
+      statusCode: 400,
+      ...options,
+    });
+    this.errorType = this.constructor.name;
+  }
 }
 
 class InvalidOfferName extends InvalidPropError {}
@@ -25,16 +25,16 @@ class InvalidOfferCoupon extends InvalidPropError {}
 class InvalidOfferStatus extends InvalidPropError {}
 
 module.exports = {
-    InvalidOfferName,
-    InvalidOfferTitle,
-    InvalidOfferDescription,
-    InvalidOfferCode,
-    InvalidOfferType,
-    InvalidOfferAmount,
-    InvalidOfferCurrency,
-    InvalidOfferCadence,
-    InvalidOfferDuration,
-    InvalidOfferTierName,
-    InvalidOfferCoupon,
-    InvalidOfferStatus
+  InvalidOfferName,
+  InvalidOfferTitle,
+  InvalidOfferDescription,
+  InvalidOfferCode,
+  InvalidOfferType,
+  InvalidOfferAmount,
+  InvalidOfferCurrency,
+  InvalidOfferCadence,
+  InvalidOfferDuration,
+  InvalidOfferTierName,
+  InvalidOfferCoupon,
+  InvalidOfferStatus,
 };

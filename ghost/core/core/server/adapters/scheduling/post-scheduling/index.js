@@ -9,46 +9,49 @@ const getSchedulerIntegration = require('./scheduler-intergation');
  * @return {Promise}
  */
 const loadScheduledResources = async function () {
-    const api = require('../../../api').endpoints;
-    const SCHEDULED_RESOURCES = ['post', 'page'];
+  const api = require('../../../api').endpoints;
+  const SCHEDULED_RESOURCES = ['post', 'page'];
 
-    // Fetches all scheduled resources(posts/pages) with default API
-    const results = await Promise.mapSeries(SCHEDULED_RESOURCES, async (resourceType) => {
-        const result = await api.schedules.getScheduled.query({
-            options: {
-                resource: resourceType
-            }
-        });
+  // Fetches all scheduled resources(posts/pages) with default API
+  const results = await Promise.mapSeries(
+    SCHEDULED_RESOURCES,
+    async (resourceType) => {
+      const result = await api.schedules.getScheduled.query({
+        options: {
+          resource: resourceType,
+        },
+      });
 
-        return result[resourceType] || [];
+      return result[resourceType] || [];
+    }
+  );
+
+  return SCHEDULED_RESOURCES.reduce(function (obj, entry, index) {
+    return Object.assign(obj, {
+      [entry]: results[index],
     });
-
-    return SCHEDULED_RESOURCES.reduce(function (obj, entry, index) {
-        return Object.assign(obj, {
-            [entry]: results[index]
-        });
-    }, {});
+  }, {});
 };
 
 const init = async (options) => {
-    const integration = await getSchedulerIntegration();
-    const adapter = await localUtils.createAdapter();
+  const integration = await getSchedulerIntegration();
+  const adapter = await localUtils.createAdapter();
 
-    let scheduledResources;
+  let scheduledResources;
 
-    if (!adapter.rescheduleOnBoot) {
-        scheduledResources = [];
-    } else {
-        scheduledResources = await loadScheduledResources();
-    }
+  if (!adapter.rescheduleOnBoot) {
+    scheduledResources = [];
+  } else {
+    scheduledResources = await loadScheduledResources();
+  }
 
-    return new PostScheduler({
-        apiUrl: options.apiUrl,
-        integration,
-        adapter,
-        scheduledResources,
-        events
-    });
+  return new PostScheduler({
+    apiUrl: options.apiUrl,
+    integration,
+    adapter,
+    scheduledResources,
+    events,
+  });
 };
 
 module.exports = init;

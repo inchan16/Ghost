@@ -2,9 +2,9 @@
 'use strict';
 
 module.exports = {
-    name: 'koenig-editor',
+  name: 'koenig-editor',
 
-    isDevelopingAddon() {
-        return true;
-    }
+  isDevelopingAddon() {
+    return true;
+  },
 };

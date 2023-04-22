@@ -8,7 +8,7 @@ const ghostVersion = require('@tryghost/version');
 require('./core/server/overrides');
 
 module.exports = {
-    currentVersion: ghostVersion.safe,
-    database: config.get('database'),
-    migrationPath: config.get('paths:migrationPath')
+  currentVersion: ghostVersion.safe,
+  database: config.get('database'),
+  migrationPath: config.get('paths:migrationPath'),
 };

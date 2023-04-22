@@ -15,17 +15,17 @@ require('./base/listeners');
 exports = module.exports;
 
 function init() {
-    const baseNow = Date.now();
-    exports.Base = require('./base');
-    debug(`${Date.now() - baseNow}ms - Base.js require`);
+  const baseNow = Date.now();
+  exports.Base = require('./base');
+  debug(`${Date.now() - baseNow}ms - Base.js require`);
 
-    let modelsFiles = glob.sync('!(index).js', {cwd: __dirname});
-    modelsFiles.forEach((model) => {
-        const name = model.replace(/.js$/, '');
-        const modelNow = Date.now();
-        _.extend(exports, require('./' + name));
-        debug(`${Date.now() - modelNow}ms - ${model} require`);
-    });
+  let modelsFiles = glob.sync('!(index).js', { cwd: __dirname });
+  modelsFiles.forEach((model) => {
+    const name = model.replace(/.js$/, '');
+    const modelNow = Date.now();
+    _.extend(exports, require('./' + name));
+    debug(`${Date.now() - modelNow}ms - ${model} require`);
+  });
 }
 
 /**

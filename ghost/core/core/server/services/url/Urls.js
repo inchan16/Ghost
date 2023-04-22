@@ -20,140 +20,148 @@ const events = require('../../lib/common/events');
  * You can easily ask `this.urls[resourceId]`.
  */
 class Urls {
-    /**
-     *
-     * @param {Object} [options]
-     * @param {Object} [options.urls] map of available URLs with their resources
-     */
-    constructor({urls = {}} = {}) {
-        this.urls = urls;
+  /**
+   *
+   * @param {Object} [options]
+   * @param {Object} [options.urls] map of available URLs with their resources
+   */
+  constructor({ urls = {} } = {}) {
+    this.urls = urls;
+  }
+
+  /**
+   * @description Add a url to the system.
+   * @param {Object} options
+   * @param {import('./Resource')} options.resource - instance of the Resource class
+   * @param {string} options.generatorId
+   * @param {string} options.url
+   */
+  add(options) {
+    const url = options.url;
+    const generatorId = options.generatorId;
+    const resource = options.resource;
+
+    debug('cache', url);
+
+    if (this.urls[resource.data.id]) {
+      const error = new errors.InternalServerError({
+        message: 'This should not happen.',
+        code: 'URLSERVICE_RESOURCE_DUPLICATE',
+      });
+      if (process.env.NODE_ENV.startsWith('test')) {
+        logging.warn({
+          message: 'Duplicate URL',
+          err: error,
+        });
+      } else {
+        logging.error(error);
+      }
+
+      this.removeResourceId(resource.data.id);
     }
 
-    /**
-     * @description Add a url to the system.
-     * @param {Object} options
-     * @param {import('./Resource')} options.resource - instance of the Resource class
-     * @param {string} options.generatorId
-     * @param {string} options.url
-     */
-    add(options) {
-        const url = options.url;
-        const generatorId = options.generatorId;
-        const resource = options.resource;
+    this.urls[resource.data.id] = {
+      url: url,
+      generatorId: generatorId,
+      resource: resource,
+    };
 
-        debug('cache', url);
+    // @NOTE: Notify the whole system. Currently used for sitemaps service.
+    events.emit('url.added', {
+      url: {
+        relative: url,
+        absolute: urlUtils.createUrl(url, true),
+      },
+      resource: resource,
+    });
+  }
 
-        if (this.urls[resource.data.id]) {
-            const error = new errors.InternalServerError({
-                message: 'This should not happen.',
-                code: 'URLSERVICE_RESOURCE_DUPLICATE'
-            });
-            if (process.env.NODE_ENV.startsWith('test')) {
-                logging.warn({
-                    message: 'Duplicate URL',
-                    err: error
-                });
-            } else {
-                logging.error(error);
-            }
+  /**
+   * @description Get url by resource id.
+   * @param {String} id
+   * @returns {Object}
+   */
+  getByResourceId(id) {
+    return this.urls[id];
+  }
 
-            this.removeResourceId(resource.data.id);
+  /**
+   * @description Get all urls by generator id.
+   * @param {String} generatorId
+   * @returns {Array}
+   */
+  getByGeneratorId(generatorId) {
+    return _.reduce(
+      Object.keys(this.urls),
+      (toReturn, resourceId) => {
+        if (this.urls[resourceId].generatorId === generatorId) {
+          toReturn.push(this.urls[resourceId]);
         }
 
-        this.urls[resource.data.id] = {
-            url: url,
-            generatorId: generatorId,
-            resource: resource
-        };
+        return toReturn;
+      },
+      []
+    );
+  }
 
-        // @NOTE: Notify the whole system. Currently used for sitemaps service.
-        events.emit('url.added', {
-            url: {
-                relative: url,
-                absolute: urlUtils.createUrl(url, true)
-            },
-            resource: resource
-        });
-    }
-
-    /**
-     * @description Get url by resource id.
-     * @param {String} id
-     * @returns {Object}
-     */
-    getByResourceId(id) {
-        return this.urls[id];
-    }
-
-    /**
-     * @description Get all urls by generator id.
-     * @param {String} generatorId
-     * @returns {Array}
-     */
-    getByGeneratorId(generatorId) {
-        return _.reduce(Object.keys(this.urls), (toReturn, resourceId) => {
-            if (this.urls[resourceId].generatorId === generatorId) {
-                toReturn.push(this.urls[resourceId]);
-            }
-
-            return toReturn;
-        }, []);
-    }
-
-    /**
-     * @description Get by url.
-     *
-     * @NOTE:
-     * It's is in theory possible that:
-     *
-     *  - resource1 -> /welcome/
-     *  - resource2 -> /welcome/
-     *
-     *  But depending on the routing registration, you will always serve e.g. resource1,
-     *  because the router it belongs to was registered first.
-     */
-    getByUrl(url) {
-        return _.reduce(Object.keys(this.urls), (toReturn, resourceId) => {
-            if (this.urls[resourceId].url === url) {
-                toReturn.push(this.urls[resourceId]);
-            }
-
-            return toReturn;
-        }, []);
-    }
-
-    /**
-     * @description Remove url.
-     * @param id
-     */
-    removeResourceId(id) {
-        if (!this.urls[id]) {
-            return;
+  /**
+   * @description Get by url.
+   *
+   * @NOTE:
+   * It's is in theory possible that:
+   *
+   *  - resource1 -> /welcome/
+   *  - resource2 -> /welcome/
+   *
+   *  But depending on the routing registration, you will always serve e.g. resource1,
+   *  because the router it belongs to was registered first.
+   */
+  getByUrl(url) {
+    return _.reduce(
+      Object.keys(this.urls),
+      (toReturn, resourceId) => {
+        if (this.urls[resourceId].url === url) {
+          toReturn.push(this.urls[resourceId]);
         }
 
-        debug('removed', this.urls[id].url, this.urls[id].generatorId);
+        return toReturn;
+      },
+      []
+    );
+  }
 
-        events.emit('url.removed', {
-            url: this.urls[id].url,
-            resource: this.urls[id].resource
-        });
-
-        delete this.urls[id];
+  /**
+   * @description Remove url.
+   * @param id
+   */
+  removeResourceId(id) {
+    if (!this.urls[id]) {
+      return;
     }
 
-    /**
-     * @description Reset instance.
-     */
-    reset() {
-        this.urls = {};
-    }
+    debug('removed', this.urls[id].url, this.urls[id].generatorId);
 
-    /**
-     * @description Soft reset instance.
-     */
-    softReset() {
-        this.urls = {};
-    }
+    events.emit('url.removed', {
+      url: this.urls[id].url,
+      resource: this.urls[id].resource,
+    });
+
+    delete this.urls[id];
+  }
+
+  /**
+   * @description Reset instance.
+   */
+  reset() {
+    this.urls = {};
+  }
+
+  /**
+   * @description Soft reset instance.
+   */
+  softReset() {
+    this.urls = {};
+  }
 }
 
 module.exports = Urls;

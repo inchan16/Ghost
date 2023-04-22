@@ -12,28 +12,34 @@ const urlUtils = require('../../../shared/url-utils');
  * @description Takes a url or filepath and returns a filepath with is readable
  * for the local file storage.
  */
-exports.getLocalImagesStoragePath = function getLocalImagesStoragePath(imagePath) {
-    // The '/' in urlJoin is necessary to add the '/' to `content/images`, if no subdirectory is setup
-    const urlRegExp = new RegExp(`^${urlUtils.urlJoin(
-        urlUtils.urlFor('home', true),
-        urlUtils.getSubdir(),
-        '/',
-        urlUtils.STATIC_IMAGE_URL_PREFIX)}`
-    );
+exports.getLocalImagesStoragePath = function getLocalImagesStoragePath(
+  imagePath
+) {
+  // The '/' in urlJoin is necessary to add the '/' to `content/images`, if no subdirectory is setup
+  const urlRegExp = new RegExp(
+    `^${urlUtils.urlJoin(
+      urlUtils.urlFor('home', true),
+      urlUtils.getSubdir(),
+      '/',
+      urlUtils.STATIC_IMAGE_URL_PREFIX
+    )}`
+  );
 
-    const filePathRegExp = new RegExp(`^${urlUtils.urlJoin(
-        urlUtils.getSubdir(),
-        '/',
-        urlUtils.STATIC_IMAGE_URL_PREFIX)}`
-    );
+  const filePathRegExp = new RegExp(
+    `^${urlUtils.urlJoin(
+      urlUtils.getSubdir(),
+      '/',
+      urlUtils.STATIC_IMAGE_URL_PREFIX
+    )}`
+  );
 
-    if (imagePath.match(urlRegExp)) {
-        return imagePath.replace(urlRegExp, '');
-    } else if (imagePath.match(filePathRegExp)) {
-        return imagePath.replace(filePathRegExp, '');
-    } else {
-        return imagePath;
-    }
+  if (imagePath.match(urlRegExp)) {
+    return imagePath.replace(urlRegExp, '');
+  } else if (imagePath.match(filePathRegExp)) {
+    return imagePath.replace(filePathRegExp, '');
+  } else {
+    return imagePath;
+  }
 };
 
 /**
@@ -43,11 +49,11 @@ exports.getLocalImagesStoragePath = function getLocalImagesStoragePath(imagePath
  */
 
 exports.isLocalImage = function isLocalImage(imagePath) {
-    const localImagePath = this.getLocalImagesStoragePath(imagePath);
+  const localImagePath = this.getLocalImagesStoragePath(imagePath);
 
-    if (localImagePath !== imagePath) {
-        return true;
-    } else {
-        return false;
-    }
+  if (localImagePath !== imagePath) {
+    return true;
+  } else {
+    return false;
+  }
 };

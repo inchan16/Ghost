@@ -1,20 +1,20 @@
 import Component from '@glimmer/component';
-import {action} from '@ember/object';
-import {inject as service} from '@ember/service';
-import {task, timeout} from 'ember-concurrency';
+import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
+import { task, timeout } from 'ember-concurrency';
 
 export default class MembersActivityMemberFilter extends Component {
-    @service store;
+  @service store;
 
-    @action
-    clear() {
-        this.args.onChange(null);
-    }
+  @action
+  clear() {
+    this.args.onChange(null);
+  }
 
-    @task
-    *searchMembersTask(term) {
-        yield timeout(300); // debounce
+  @task
+  *searchMembersTask(term) {
+    yield timeout(300); // debounce
 
-        return yield this.store.query('member', {search: term, limit: 20});
-    }
+    return yield this.store.query('member', { search: term, limit: 20 });
+  }
 }

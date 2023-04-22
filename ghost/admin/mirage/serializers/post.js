@@ -1,14 +1,14 @@
 import BaseSerializer from './application';
 
 export default BaseSerializer.extend({
-    embed: true,
+  embed: true,
 
-    include(/*request*/) {
-        let includes = [];
+  include(/*request*/) {
+    let includes = [];
 
-        includes.push('tags');
-        includes.push('authors');
+    includes.push('tags');
+    includes.push('authors');
 
-        return includes;
-    }
+    return includes;
+  },
 });

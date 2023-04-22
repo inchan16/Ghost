@@ -9,5 +9,5 @@ const postScheduling = require('./post-scheduling');
  * @param {string} options.apiUrl - Target Ghost API url
  */
 exports.init = function init(options) {
-    return postScheduling(options);
+  return postScheduling(options);
 };

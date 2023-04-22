@@ -16,13 +16,13 @@ const command = require('./core/cli/command');
 
 // Switch between boot modes
 switch (mode) {
-case 'repl':
-case 'timetravel':
-case 'generate-data':
-case 'record-test':
+  case 'repl':
+  case 'timetravel':
+  case 'generate-data':
+  case 'record-test':
     command.run(mode);
     break;
-default:
+  default:
     // New boot sequence
     require('./core/boot')();
 }

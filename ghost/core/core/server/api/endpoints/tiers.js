@@ -1,76 +1,65 @@
 const tiersService = require('../../services/tiers');
 
 module.exports = {
-    docName: 'tiers',
+  docName: 'tiers',
 
-    browse: {
-        options: [
-            'limit',
-            'fields',
-            'filter',
-            'order',
-            'debug',
-            'page'
-        ],
-        permissions: {
-            docName: 'products'
-        },
-        async query(frame) {
-            const page = await tiersService.api.browse(frame.options);
-            return page;
-        }
+  browse: {
+    options: ['limit', 'fields', 'filter', 'order', 'debug', 'page'],
+    permissions: {
+      docName: 'products',
     },
-
-    read: {
-        data: [
-            'id'
-        ],
-        permissions: {
-            docName: 'products'
-        },
-        async query(frame) {
-            return await tiersService.api.read(frame.data.id);
-        }
+    async query(frame) {
+      const page = await tiersService.api.browse(frame.options);
+      return page;
     },
+  },
 
-    add: {
-        statusCode: 201,
-        headers: {
-            cacheInvalidate: true
-        },
-        validation: {
-            data: {
-                name: {required: true}
-            }
-        },
-        permissions: {
-            docName: 'products'
-        },
-        async query(frame) {
-            return await tiersService.api.add(frame.data);
-        }
+  read: {
+    data: ['id'],
+    permissions: {
+      docName: 'products',
     },
+    async query(frame) {
+      return await tiersService.api.read(frame.data.id);
+    },
+  },
 
-    edit: {
-        statusCode: 200,
-        options: [
-            'id'
-        ],
-        headers: {
-            cacheInvalidate: true
+  add: {
+    statusCode: 201,
+    headers: {
+      cacheInvalidate: true,
+    },
+    validation: {
+      data: {
+        name: { required: true },
+      },
+    },
+    permissions: {
+      docName: 'products',
+    },
+    async query(frame) {
+      return await tiersService.api.add(frame.data);
+    },
+  },
+
+  edit: {
+    statusCode: 200,
+    options: ['id'],
+    headers: {
+      cacheInvalidate: true,
+    },
+    validation: {
+      options: {
+        id: {
+          required: true,
         },
-        validation: {
-            options: {
-                id: {
-                    required: true
-                }
-            }
-        },
-        permissions: {
-            docName: 'products'
-        },
-        async query(frame) {
-            return await tiersService.api.edit(frame.options.id, frame.data);
-        }
-    }
+      },
+    },
+    permissions: {
+      docName: 'products',
+    },
+    async query(frame) {
+      return await tiersService.api.edit(frame.options.id, frame.data);
+    },
+  },
 };

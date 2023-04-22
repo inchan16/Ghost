@@ -1,11 +1,10 @@
-const {
-    addPermissionWithRoles
-} = require('../../utils');
+const { addPermissionWithRoles } = require('../../utils');
 
-module.exports = addPermissionWithRoles({
+module.exports = addPermissionWithRoles(
+  {
     name: 'Reset all passwords',
     action: 'resetAllPasswords',
-    object: 'authentication'
-}, [
-    'Administrator'
-]);
+    object: 'authentication',
+  },
+  ['Administrator']
+);

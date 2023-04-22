@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/components/koenig-alt-input';
+export { default } from 'koenig-editor/components/koenig-alt-input';

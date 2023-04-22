@@ -7,19 +7,24 @@ const PERMIT_ACCESS = true;
 const BLOCK_ACCESS = false;
 
 // TODO: better place to store this?
-const MEMBER_NQL_EXPANSIONS = [{
+const MEMBER_NQL_EXPANSIONS = [
+  {
     key: 'labels',
-    replacement: 'labels.slug'
-}, {
+    replacement: 'labels.slug',
+  },
+  {
     key: 'label',
-    replacement: 'labels.slug'
-}, {
+    replacement: 'labels.slug',
+  },
+  {
     key: 'products',
-    replacement: 'products.slug'
-}, {
+    replacement: 'products.slug',
+  },
+  {
     key: 'product',
-    replacement: 'products.slug'
-}];
+    replacement: 'products.slug',
+  },
+];
 
 /**
  * @param {object} post - A post object to check access to
@@ -28,37 +33,44 @@ const MEMBER_NQL_EXPANSIONS = [{
  * @returns {AccessFlag}
  */
 function checkPostAccess(post, member) {
-    if (post.visibility === 'public') {
-        return PERMIT_ACCESS;
-    }
+  if (post.visibility === 'public') {
+    return PERMIT_ACCESS;
+  }
 
-    if (!member) {
-        return BLOCK_ACCESS;
-    }
-
-    if (post.visibility === 'members') {
-        return PERMIT_ACCESS;
-    }
-
-    let visibility = post.visibility === 'paid' ? 'status:-free' : post.visibility;
-    if (visibility === 'tiers') {
-        if (!post.tiers) {
-            return BLOCK_ACCESS;
-        }
-        visibility = post.tiers.map((product) => {
-            return `product:${product.slug}`;
-        }).join(',');
-    }
-
-    if (visibility && member.status && nql(visibility, {expansions: MEMBER_NQL_EXPANSIONS}).queryJSON(member)) {
-        return PERMIT_ACCESS;
-    }
-
+  if (!member) {
     return BLOCK_ACCESS;
+  }
+
+  if (post.visibility === 'members') {
+    return PERMIT_ACCESS;
+  }
+
+  let visibility =
+    post.visibility === 'paid' ? 'status:-free' : post.visibility;
+  if (visibility === 'tiers') {
+    if (!post.tiers) {
+      return BLOCK_ACCESS;
+    }
+    visibility = post.tiers
+      .map((product) => {
+        return `product:${product.slug}`;
+      })
+      .join(',');
+  }
+
+  if (
+    visibility &&
+    member.status &&
+    nql(visibility, { expansions: MEMBER_NQL_EXPANSIONS }).queryJSON(member)
+  ) {
+    return PERMIT_ACCESS;
+  }
+
+  return BLOCK_ACCESS;
 }
 
 module.exports = {
-    checkPostAccess,
-    PERMIT_ACCESS,
-    BLOCK_ACCESS
+  checkPostAccess,
+  PERMIT_ACCESS,
+  BLOCK_ACCESS,
 };

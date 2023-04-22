@@ -10,17 +10,17 @@ let storagePath = config.getContentPath('data');
 
 // TODO: remove this hack in favor of loading from the content path when it's possible to do so
 //       by mocking content folders in pre-boot phase
-if (process.env.NODE_ENV.startsWith('test')){
-    storagePath = config.get('paths').urlCache;
+if (process.env.NODE_ENV.startsWith('test')) {
+  storagePath = config.get('paths').urlCache;
 
-    // NOTE: prevents test suites from overwriting cache fixtures.
-    //       A better solution would be injecting a different implementation of the
-    //       cache based on the environment, this approach should do the trick for now
-    writeDisabled = true;
+  // NOTE: prevents test suites from overwriting cache fixtures.
+  //       A better solution would be injecting a different implementation of the
+  //       cache based on the environment, this approach should do the trick for now
+  writeDisabled = true;
 }
 
-const cache = new LocalFileCache({storagePath, writeDisabled});
-const urlService = new UrlService({cache});
+const cache = new LocalFileCache({ storagePath, writeDisabled });
+const urlService = new UrlService({ cache });
 
 // Singleton
 module.exports = urlService;

@@ -8,7 +8,7 @@ const obfuscatedSetting = '••••••••';
  * @returns {Boolean}
  */
 function isSecretSetting(setting) {
-    return /secret/.test(setting.key);
+  return /secret/.test(setting.key);
 }
 
 /**
@@ -19,14 +19,14 @@ function isSecretSetting(setting) {
  * @returns {Object} settings record with obfuscated value if it's a secret
  */
 function hideValueIfSecret(setting) {
-    if (setting.value && isSecretSetting(setting)) {
-        return {...setting, value: obfuscatedSetting};
-    }
-    return setting;
+  if (setting.value && isSecretSetting(setting)) {
+    return { ...setting, value: obfuscatedSetting };
+  }
+  return setting;
 }
 
 module.exports = {
-    obfuscatedSetting,
-    isSecretSetting,
-    hideValueIfSecret
+  obfuscatedSetting,
+  isSecretSetting,
+  hideValueIfSecret,
 };

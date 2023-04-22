@@ -1,30 +1,30 @@
 import Component from '@glimmer/component';
-import {action} from '@ember/object';
-import {inject as service} from '@ember/service';
+import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
 
 export default class GhAlert extends Component {
-    @service notifications;
+  @service notifications;
 
-    get typeClass() {
-        const typeMapping = {
-            success: 'green',
-            error: 'red',
-            warn: 'blue',
-            info: 'blue'
-        };
+  get typeClass() {
+    const typeMapping = {
+      success: 'green',
+      error: 'red',
+      warn: 'blue',
+      info: 'blue',
+    };
 
-        const type = this.args.message.type;
+    const type = this.args.message.type;
 
-        let classes = '';
-        if (typeMapping[type] !== undefined) {
-            classes += `gh-alert-${typeMapping[type]}`;
-        }
-
-        return classes;
+    let classes = '';
+    if (typeMapping[type] !== undefined) {
+      classes += `gh-alert-${typeMapping[type]}`;
     }
 
-    @action
-    closeNotification() {
-        this.notifications.closeNotification(this.args.message);
-    }
+    return classes;
+  }
+
+  @action
+  closeNotification() {
+    this.notifications.closeNotification(this.args.message);
+  }
 }

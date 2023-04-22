@@ -1,9 +1,9 @@
 function formatNumber(number) {
-    return number.toLocaleString();
+  return number.toLocaleString();
 }
 
 const iff = (cond, yes, no) => (cond ? yes : no);
-module.exports = ({result, siteUrl, membersUrl, emailRecipient}) => `
+module.exports = ({ result, siteUrl, membersUrl, emailRecipient }) => `
 <!doctype html>
 <html>
   <head>
@@ -127,32 +127,70 @@ module.exports = ({result, siteUrl, membersUrl, emailRecipient}) => `
                       </tr>
                       <tr>
                           <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 16px; vertical-align: top;">
-                            <p class="title" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 21px; color: #3A464C; font-weight: normal; line-height: 25px; margin-bottom: 30px; margin-top: 50px; font-weight: 600; color: #15212A;">${iff(result.imported > 0, `Your member import is complete`, `Your member import was unsuccessful`)}</p>
+                            <p class="title" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 21px; color: #3A464C; font-weight: normal; line-height: 25px; margin-bottom: 30px; margin-top: 50px; font-weight: 600; color: #15212A;">${iff(
+                              result.imported > 0,
+                              `Your member import is complete`,
+                              `Your member import was unsuccessful`
+                            )}</p>
                           </td>
                       </tr>
-                    ${iff(result.imported === 0 && result.errors.length === 0, `
+                    ${iff(
+                      result.imported === 0 && result.errors.length === 0,
+                      `
                     <tr>
                       <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 14px; vertical-align: top; padding-bottom: 16px;">
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 16px; color: #3A464C; font-weight: normal; margin: 0; line-height: 25px; margin-bottom: 0px;">No members were added.</p>
                       </td>
                     </tr>
-                    `, ``)}
-                    ${iff(result.imported > 0, `
+                    `,
+                      ``
+                    )}
+                    ${iff(
+                      result.imported > 0,
+                      `
                     <tr>
                       <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 14px; vertical-align: top; padding-bottom: 16px;">
-                          <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 16px; color: #3A464C; font-weight: normal; margin: 0; line-height: 25px; margin-bottom: 0px;">A total of <strong style="font-weight: 600;">${formatNumber(result.imported)}</strong> ${iff(result.imported === 1, 'person', 'people')} were successfully added or updated in your list of members, and now have access to your site.</p>
+                          <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 16px; color: #3A464C; font-weight: normal; margin: 0; line-height: 25px; margin-bottom: 0px;">A total of <strong style="font-weight: 600;">${formatNumber(
+                            result.imported
+                          )}</strong> ${iff(
+                        result.imported === 1,
+                        'person',
+                        'people'
+                      )} were successfully added or updated in your list of members, and now have access to your site.</p>
                       </td>
-                    </tr>`, ``)}
-                    ${iff(result.errors.length > 0, `
+                    </tr>`,
+                      ``
+                    )}
+                    ${iff(
+                      result.errors.length > 0,
+                      `
                     <tr>
                       <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 14px; vertical-align: top; padding-bottom: 16px;">
                         <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 16px; color: #3A464C; font-weight: normal; margin: 0; line-height: 25px; margin-bottom: 0px;">
-                        ${iff(result.imported === 0, `No members were added.`, `<strong style="font-weight: 600;">${formatNumber(result.errors.length)}</strong> ${iff(result.errors.length === 1, `member was`, `members were`)} skipped due to errors.`)} There's a validated CSV file attached to this email with the list of errors so that you can fix them and re-upload the CSV to complete the import.</p>
+                        ${iff(
+                          result.imported === 0,
+                          `No members were added.`,
+                          `<strong style="font-weight: 600;">${formatNumber(
+                            result.errors.length
+                          )}</strong> ${iff(
+                            result.errors.length === 1,
+                            `member was`,
+                            `members were`
+                          )} skipped due to errors.`
+                        )} There's a validated CSV file attached to this email with the list of errors so that you can fix them and re-upload the CSV to complete the import.</p>
                       </td>
-                    </tr>`, '')}
+                    </tr>`,
+                      ''
+                    )}
                     <tr>
                       <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 14px; vertical-align: top; padding-bottom: 12px; padding-top: 16px;">
-                        <a href="${membersUrl.href}" target="_blank" style="display: inline-block; color: #ffffff; background-color: #15212A; border: solid 1px #15212A; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 16px; font-weight: normal; margin: 0; padding: 9px 22px 10px; border-color: #15212A;">${iff(result.imported > 0, `View members`, `Try again`)}</a>
+                        <a href="${
+                          membersUrl.href
+                        }" target="_blank" style="display: inline-block; color: #ffffff; background-color: #15212A; border: solid 1px #15212A; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 16px; font-weight: normal; margin: 0; padding: 9px 22px 10px; border-color: #15212A;">${iff(
+  result.imported > 0,
+  `View members`,
+  `Try again`
+)}</a>
                       </td>
                     </tr>
                   </table>
@@ -161,7 +199,11 @@ module.exports = ({result, siteUrl, membersUrl, emailRecipient}) => `
               <tr>
                 <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; vertical-align: top; padding-top: 80px; padding-bottom: 10px;">
                     <div class="footer">
-                      <p class="small" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; color: #738A94; font-weight: normal; margin: 0; line-height: 18px; margin-bottom: 0px; font-size: 11px;">This email was sent from <a href="${siteUrl.href}" style="color: #738A94;">${siteUrl.host}</a> to <a href="mailto:${emailRecipient}" style="color: #738A94;">${emailRecipient}</a></p>
+                      <p class="small" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; color: #738A94; font-weight: normal; margin: 0; line-height: 18px; margin-bottom: 0px; font-size: 11px;">This email was sent from <a href="${
+                        siteUrl.href
+                      }" style="color: #738A94;">${
+  siteUrl.host
+}</a> to <a href="mailto:${emailRecipient}" style="color: #738A94;">${emailRecipient}</a></p>
                     </div>
                 </td>
               </tr>
@@ -179,4 +221,3 @@ module.exports = ({result, siteUrl, membersUrl, emailRecipient}) => `
   </body>
 </html>
 `;
-

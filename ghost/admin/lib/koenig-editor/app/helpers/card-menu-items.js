@@ -1,1 +1,1 @@
-export {default} from 'koenig-editor/helpers/card-menu-items';
+export { default } from 'koenig-editor/helpers/card-menu-items';

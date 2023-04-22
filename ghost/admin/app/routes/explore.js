@@ -1,10 +1,10 @@
 import AuthenticatedRoute from 'ghost-admin/routes/authenticated';
-import {inject as service} from '@ember/service';
+import { inject as service } from '@ember/service';
 
 export default class ExploreRoute extends AuthenticatedRoute {
-    @service store;
+  @service store;
 
-    model() {
-        return this.store.findAll('integration');
-    }
+  model() {
+    return this.store.findAll('integration');
+  }
 }

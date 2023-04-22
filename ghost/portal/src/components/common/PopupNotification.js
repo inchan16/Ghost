@@ -1,10 +1,10 @@
 import React from 'react';
 import AppContext from '../../AppContext';
-import {ReactComponent as CloseIcon} from '../../images/icons/close.svg';
-import {ReactComponent as CheckmarkIcon} from '../../images/icons/checkmark-fill.svg';
-import {ReactComponent as WarningIcon} from '../../images/icons/warning-fill.svg';
-import {getSupportAddress} from '../../utils/helpers';
-import {clearURLParams} from '../../utils/notifications';
+import { ReactComponent as CloseIcon } from '../../images/icons/close.svg';
+import { ReactComponent as CheckmarkIcon } from '../../images/icons/checkmark-fill.svg';
+import { ReactComponent as WarningIcon } from '../../images/icons/warning-fill.svg';
+import { getSupportAddress } from '../../utils/helpers';
+import { clearURLParams } from '../../utils/notifications';
 
 export const PopupNotificationStyles = `
     .gh-portal-popupnotification {
@@ -101,104 +101,131 @@ export const PopupNotificationStyles = `
     }
 `;
 
-const CloseButton = ({hide = false, onClose}) => {
-    if (hide) {
-        return null;
-    }
-    return (
-        <CloseIcon className='closeicon' alt='Close' onClick={onClose} />
-    );
+const CloseButton = ({ hide = false, onClose }) => {
+  if (hide) {
+    return null;
+  }
+  return <CloseIcon className="closeicon" alt="Close" onClick={onClose} />;
 };
 
-const NotificationText = ({message, site}) => {
-    const supportAddress = getSupportAddress({site});
-    const supportAddressMail = `mailto:${supportAddress}`;
-    if (message) {
-        return (
-            <p>{message}</p>
-        );
-    }
-    return (
-        <p> An unexpected error occured. Please try again or <a href={supportAddressMail} onClick={() => {
-            supportAddressMail && window.open(supportAddressMail);
-        }}>contact support</a> if the error persists.</p>
-    );
+const NotificationText = ({ message, site }) => {
+  const supportAddress = getSupportAddress({ site });
+  const supportAddressMail = `mailto:${supportAddress}`;
+  if (message) {
+    return <p>{message}</p>;
+  }
+  return (
+    <p>
+      {' '}
+      An unexpected error occured. Please try again or{' '}
+      <a
+        href={supportAddressMail}
+        onClick={() => {
+          supportAddressMail && window.open(supportAddressMail);
+        }}
+      >
+        contact support
+      </a>{' '}
+      if the error persists.
+    </p>
+  );
 };
 
 export default class PopupNotification extends React.Component {
-    static contextType = AppContext;
-    constructor() {
-        super();
-        this.state = {
-            className: ''
-        };
-    }
+  static contextType = AppContext;
+  constructor() {
+    super();
+    this.state = {
+      className: '',
+    };
+  }
 
-    onAnimationEnd(e) {
-        const {popupNotification} = this.context;
-        const {type} = popupNotification || {};
-        if (e.animationName === 'popupnotification-slideout') {
-            if (type === 'stripe:billing-update') {
-                clearURLParams(['stripe']);
-            }
-            this.context.onAction('clearPopupNotification');
-        }
+  onAnimationEnd(e) {
+    const { popupNotification } = this.context;
+    const { type } = popupNotification || {};
+    if (e.animationName === 'popupnotification-slideout') {
+      if (type === 'stripe:billing-update') {
+        clearURLParams(['stripe']);
+      }
+      this.context.onAction('clearPopupNotification');
     }
+  }
 
-    closeNotification(e) {
-        this.context.onAction('clearPopupNotification');
+  closeNotification(e) {
+    this.context.onAction('clearPopupNotification');
+  }
+
+  componentDidUpdate() {
+    const { popupNotification } = this.context;
+    if (popupNotification.count !== this.state.notificationCount) {
+      clearTimeout(this.timeoutId);
+      this.handlePopupNotification({ popupNotification });
     }
+  }
 
-    componentDidUpdate() {
-        const {popupNotification} = this.context;
-        if (popupNotification.count !== this.state.notificationCount) {
-            clearTimeout(this.timeoutId);
-            this.handlePopupNotification({popupNotification});
-        }
-    }
-
-    handlePopupNotification({popupNotification}) {
-        this.setState({
-            notificationCount: popupNotification.count
+  handlePopupNotification({ popupNotification }) {
+    this.setState({
+      notificationCount: popupNotification.count,
+    });
+    if (popupNotification.autoHide) {
+      const { duration = 2600 } = popupNotification;
+      this.timeoutId = setTimeout(() => {
+        this.setState((state) => {
+          if (state.className !== 'slideout') {
+            return {
+              className: 'slideout',
+              notificationCount: popupNotification.count,
+            };
+          }
+          return {};
         });
-        if (popupNotification.autoHide) {
-            const {duration = 2600} = popupNotification;
-            this.timeoutId = setTimeout(() => {
-                this.setState((state) => {
-                    if (state.className !== 'slideout') {
-                        return {
-                            className: 'slideout',
-                            notificationCount: popupNotification.count
-                        };
-                    }
-                    return {};
-                });
-            }, duration);
-        }
+      }, duration);
     }
+  }
 
-    componentDidMount() {
-        const {popupNotification} = this.context;
-        this.handlePopupNotification({popupNotification});
-    }
+  componentDidMount() {
+    const { popupNotification } = this.context;
+    this.handlePopupNotification({ popupNotification });
+  }
 
-    componentWillUnmount() {
-        clearTimeout(this.timeoutId);
-    }
+  componentWillUnmount() {
+    clearTimeout(this.timeoutId);
+  }
 
-    render() {
-        const {popupNotification, site} = this.context;
-        const {className} = this.state;
-        const {type, status, closeable, message} = popupNotification;
-        const statusClass = status ? ` ${status}` : '';
-        const slideClass = className ? ` ${className}` : '';
+  render() {
+    const { popupNotification, site } = this.context;
+    const { className } = this.state;
+    const { type, status, closeable, message } = popupNotification;
+    const statusClass = status ? ` ${status}` : '';
+    const slideClass = className ? ` ${className}` : '';
 
-        return (
-            <div className={`gh-portal-popupnotification${statusClass}${slideClass}`} onAnimationEnd={e => this.onAnimationEnd(e)}>
-                {(status === 'error' ? <WarningIcon className='gh-portal-popupnotification-icon error' alt=''/> : <CheckmarkIcon className='gh-portal-popupnotification-icon success' alt=''/>)}
-                <NotificationText type={type} status={status} message={message} site={site} />
-                <CloseButton hide={!closeable} onClose={e => this.closeNotification(e)}/>
-            </div>
-        );
-    }
+    return (
+      <div
+        className={`gh-portal-popupnotification${statusClass}${slideClass}`}
+        onAnimationEnd={(e) => this.onAnimationEnd(e)}
+      >
+        {status === 'error' ? (
+          <WarningIcon
+            className="gh-portal-popupnotification-icon error"
+            alt=""
+          />
+        ) : (
+          <CheckmarkIcon
+            className="gh-portal-popupnotification-icon success"
+            alt=""
+          />
+        )}
+        <NotificationText
+          type={type}
+          status={status}
+          message={message}
+          site={site}
+        />
+        <CloseButton
+          hide={!closeable}
+          onClose={(e) => this.closeNotification(e)}
+        />
+      </div>
+    );
+  }
 }

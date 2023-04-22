@@ -1,3 +1,3 @@
 export default function copyTextToClipboard(text) {
-    navigator.clipboard.writeText(text);
+  navigator.clipboard.writeText(text);
 }

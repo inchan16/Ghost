@@ -2,16 +2,15 @@ const serialize = require('./serialize');
 const Promise = require('bluebird');
 
 module.exports = (event, model) => {
-    const payload = {};
+  const payload = {};
 
-    if (model) {
-        return serialize(event, model)
-            .then((result) => {
-                Object.assign(payload, result);
+  if (model) {
+    return serialize(event, model).then((result) => {
+      Object.assign(payload, result);
 
-                return payload;
-            });
-    }
+      return payload;
+    });
+  }
 
-    return Promise.resolve(payload);
+  return Promise.resolve(payload);
 };

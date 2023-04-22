@@ -1,5 +1,5 @@
-import Model, {hasMany} from '@ember-data/model';
+import Model, { hasMany } from '@ember-data/model';
 
 export default Model.extend({
-    customThemeSettings: hasMany('custom-theme-setting')
+  customThemeSettings: hasMany('custom-theme-setting'),
 });

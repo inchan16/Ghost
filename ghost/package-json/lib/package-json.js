@@ -14,7 +14,8 @@ const join = require('path').join;
 const errors = require('@tryghost/errors');
 const parse = require('./parse');
 
-const notAPackageRegex = /^\.|_messages|README.md|node_modules|bower_components/i;
+const notAPackageRegex =
+  /^\.|_messages|README.md|node_modules|bower_components/i;
 const packageJSONPath = 'package.json';
 
 /**
@@ -30,23 +31,23 @@ const packageJSONPath = 'package.json';
  * @returns {Promise<Package>}
  */
 async function processPackage(absolutePath, packageName) {
-    const pkg = {
-        name: packageName,
-        path: absolutePath
-    };
+  const pkg = {
+    name: packageName,
+    path: absolutePath,
+  };
 
-    try {
-        const packageJSON = await parse(join(absolutePath, packageJSONPath));
-        pkg['package.json'] = packageJSON;
-    } catch (err) {
-        // ignore invalid package.json for now,
-        // because Ghost does not rely/use them at the moment
-        // in the future, this .catch() will need to be removed,
-        // so that error is thrown on invalid json syntax
-        pkg['package.json'] = null;
-    }
+  try {
+    const packageJSON = await parse(join(absolutePath, packageJSONPath));
+    pkg['package.json'] = packageJSON;
+  } catch (err) {
+    // ignore invalid package.json for now,
+    // because Ghost does not rely/use them at the moment
+    // in the future, this .catch() will need to be removed,
+    // so that error is thrown on invalid json syntax
+    pkg['package.json'] = null;
+  }
 
-    return pkg;
+  return pkg;
 }
 
 /**
@@ -70,25 +71,29 @@ async function processPackage(absolutePath, packageName) {
  * @returns {Array<SimplePackage>}          array of objects with useful info about themes
  */
 function filter(packages, active) {
-    // turn active into an array if it isn't one, so this function can deal with lists and one-offs
-    if (!Array.isArray(active)) {
-        active = [active];
-    }
+  // turn active into an array if it isn't one, so this function can deal with lists and one-offs
+  if (!Array.isArray(active)) {
+    active = [active];
+  }
 
-    return _.reduce(packages, function (result, pkg, key) {
-        let item = {};
-        if (!key.match(notAPackageRegex)) {
-            item = {
-                name: key,
-                package: pkg['package.json'] || false,
-                active: _.indexOf(active, key) !== -1
-            };
+  return _.reduce(
+    packages,
+    function (result, pkg, key) {
+      let item = {};
+      if (!key.match(notAPackageRegex)) {
+        item = {
+          name: key,
+          package: pkg['package.json'] || false,
+          active: _.indexOf(active, key) !== -1,
+        };
 
-            result.push(item);
-        }
+        result.push(item);
+      }
 
-        return result;
-    }, []);
+      return result;
+    },
+    []
+  );
 }
 
 /**
@@ -97,26 +102,28 @@ function filter(packages, active) {
  * @returns {Promise<Package>}
  */
 async function readPackage(packagePath, packageName) {
-    const absolutePath = join(packagePath, packageName);
+  const absolutePath = join(packagePath, packageName);
 
-    try {
-        const stat = await fs.stat(absolutePath);
-        if (!stat.isDirectory()) {
-            return {};
-        }
-
-        const pkg = await processPackage(absolutePath, packageName);
-        const res = {};
-        res[packageName] = pkg;
-        return res;
-    } catch (err) {
-        return Promise.reject(new errors.NotFoundError({
-            message: 'Package not found',
-            err: err,
-            help: 'path: ' + packagePath,
-            context: 'name: ' + packageName
-        }));
+  try {
+    const stat = await fs.stat(absolutePath);
+    if (!stat.isDirectory()) {
+      return {};
     }
+
+    const pkg = await processPackage(absolutePath, packageName);
+    const res = {};
+    res[packageName] = pkg;
+    return res;
+  } catch (err) {
+    return Promise.reject(
+      new errors.NotFoundError({
+        message: 'Package not found',
+        err: err,
+        help: 'path: ' + packagePath,
+        context: 'name: ' + packageName,
+      })
+    );
+  }
 }
 
 /**
@@ -124,32 +131,40 @@ async function readPackage(packagePath, packageName) {
  * @returns {Promise<PackageList>}
  */
 async function readPackages(packagePath) {
-    const files = await fs.promises.readdir(packagePath, {withFileTypes: true});
-    const packages = await Promise.all(files.map(async (file) => {
-        // Filter out things which are not packages by regex
-        if (file.name.match(notAPackageRegex)) {
-            return false;
-        }
+  const files = await fs.promises.readdir(packagePath, {
+    withFileTypes: true,
+  });
+  const packages = await Promise.all(
+    files.map(async (file) => {
+      // Filter out things which are not packages by regex
+      if (file.name.match(notAPackageRegex)) {
+        return false;
+      }
 
-        if (file.isSymbolicLink()) {
-            const packageFileOrig = await fs.stat(join(packagePath, file.name));
-            return packageFileOrig.isDirectory();
-        }
+      if (file.isSymbolicLink()) {
+        const packageFileOrig = await fs.stat(join(packagePath, file.name));
+        return packageFileOrig.isDirectory();
+      }
 
-        // Check the remaining items to ensure they are a directory
-        return file.isDirectory();
-    }))
-        .then(results => files.filter((_v, index) => results[index]))
-        .then(packageFiles => Promise.all(packageFiles.map((packageFile) => {
-            const absolutePath = join(packagePath, packageFile.name);
-            return processPackage(absolutePath, packageFile.name);
-        })));
-    
-    return _.keyBy(packages, 'name');
+      // Check the remaining items to ensure they are a directory
+      return file.isDirectory();
+    })
+  )
+    .then((results) => files.filter((_v, index) => results[index]))
+    .then((packageFiles) =>
+      Promise.all(
+        packageFiles.map((packageFile) => {
+          const absolutePath = join(packagePath, packageFile.name);
+          return processPackage(absolutePath, packageFile.name);
+        })
+      )
+    );
+
+  return _.keyBy(packages, 'name');
 }
 
 module.exports = {
-    filter,
-    readPackage,
-    readPackages
+  filter,
+  readPackage,
+  readPackages,
 };

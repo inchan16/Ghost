@@ -1,24 +1,24 @@
 import ModalComponent from 'ghost-admin/components/modal-base';
-import {alias} from '@ember/object/computed';
-import {task} from 'ember-concurrency';
+import { alias } from '@ember/object/computed';
+import { task } from 'ember-concurrency';
 
 export default ModalComponent.extend({
-    // Allowed actions
-    confirm: () => {},
+  // Allowed actions
+  confirm: () => {},
 
-    stripeConnectAccountName: alias('model.stripeConnectAccountName'),
+  stripeConnectAccountName: alias('model.stripeConnectAccountName'),
 
-    actions: {
-        confirm() {
-            this.disconnectStripe.perform();
-        }
+  actions: {
+    confirm() {
+      this.disconnectStripe.perform();
     },
+  },
 
-    disconnectStripe: task(function* () {
-        try {
-            yield this.confirm();
-        } finally {
-            this.send('closeModal');
-        }
-    }).drop()
+  disconnectStripe: task(function* () {
+    try {
+      yield this.confirm();
+    } finally {
+      this.send('closeModal');
+    }
+  }).drop(),
 });

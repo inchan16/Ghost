@@ -64,39 +64,48 @@ ghostBookshelf.plugin(require('./plugins/relations'));
 
 // Manages nested updates (relationships)
 ghostBookshelf.plugin('bookshelf-relations', {
-    allowedOptions: ['context', 'importing', 'migrating'],
-    unsetRelations: true,
-    editRelations: false,
-    extendChanged: '_changed',
-    attachPreviousRelations: true,
-    hooks: {
-        belongsToMany: {
-            after: function (existing, targets, options) {
-                // reorder tags/authors
-                const queryOptions = {
-                    query: {
-                        where: {}
-                    }
-                };
+  allowedOptions: ['context', 'importing', 'migrating'],
+  unsetRelations: true,
+  editRelations: false,
+  extendChanged: '_changed',
+  attachPreviousRelations: true,
+  hooks: {
+    belongsToMany: {
+      after: function (existing, targets, options) {
+        // reorder tags/authors
+        const queryOptions = {
+          query: {
+            where: {},
+          },
+        };
 
-                // CASE: disable after hook for specific relations
-                if (['permissions_roles', 'members_newsletters'].indexOf(existing.relatedData.joinTableName) !== -1) {
-                    return Promise.resolve();
-                }
-
-                return Promise.all(targets.models.map((target, index) => {
-                    queryOptions.query.where[existing.relatedData.otherKey] = target.id;
-
-                    return existing.updatePivot({
-                        sort_order: index
-                    }, _.extend({}, options, queryOptions));
-                }));
-            },
-            beforeRelationCreation: function onCreatingRelation(model, data) {
-                data.id = ObjectId().toHexString();
-            }
+        // CASE: disable after hook for specific relations
+        if (
+          ['permissions_roles', 'members_newsletters'].indexOf(
+            existing.relatedData.joinTableName
+          ) !== -1
+        ) {
+          return Promise.resolve();
         }
-    }
+
+        return Promise.all(
+          targets.models.map((target, index) => {
+            queryOptions.query.where[existing.relatedData.otherKey] = target.id;
+
+            return existing.updatePivot(
+              {
+                sort_order: index,
+              },
+              _.extend({}, options, queryOptions)
+            );
+          })
+        );
+      },
+      beforeRelationCreation: function onCreatingRelation(model, data) {
+        data.id = ObjectId().toHexString();
+      },
+    },
+  },
 });
 
 module.exports = ghostBookshelf;

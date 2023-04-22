@@ -1,81 +1,96 @@
 module.exports = class MentionEmailReportJob {
-    /** @type {IMentionReportGenerator} */
-    #mentionReportGenerator;
+  /** @type {IMentionReportGenerator} */
+  #mentionReportGenerator;
 
-    /** @type {IMentionReportRecipientRepository} */
-    #mentionReportRecipientRepository;
+  /** @type {IMentionReportRecipientRepository} */
+  #mentionReportRecipientRepository;
 
-    /** @type {IMentionReportEmailView} */
-    #mentionReportEmailView;
+  /** @type {IMentionReportEmailView} */
+  #mentionReportEmailView;
 
-    /** @type {IMentionReportHistoryService} */
-    #mentionReportHistoryService;
+  /** @type {IMentionReportHistoryService} */
+  #mentionReportHistoryService;
 
-    /** @type {IEmailService} */
-    #emailService;
+  /** @type {IEmailService} */
+  #emailService;
 
-    /**
-     * @param {object} deps
-     * @param {IMentionReportGenerator} deps.mentionReportGenerator
-     * @param {IMentionReportRecipientRepository} deps.mentionReportRecipientRepository
-     * @param {IMentionReportEmailView} deps.mentionReportEmailView
-     * @param {IMentionReportHistoryService} deps.mentionReportHistoryService
-     * @param {IEmailService} deps.emailService
-     */
-    constructor(deps) {
-        this.#mentionReportGenerator = deps.mentionReportGenerator;
-        this.#mentionReportRecipientRepository = deps.mentionReportRecipientRepository;
-        this.#mentionReportEmailView = deps.mentionReportEmailView;
-        this.#mentionReportHistoryService = deps.mentionReportHistoryService;
-        this.#emailService = deps.emailService;
+  /**
+   * @param {object} deps
+   * @param {IMentionReportGenerator} deps.mentionReportGenerator
+   * @param {IMentionReportRecipientRepository} deps.mentionReportRecipientRepository
+   * @param {IMentionReportEmailView} deps.mentionReportEmailView
+   * @param {IMentionReportHistoryService} deps.mentionReportHistoryService
+   * @param {IEmailService} deps.emailService
+   */
+  constructor(deps) {
+    this.#mentionReportGenerator = deps.mentionReportGenerator;
+    this.#mentionReportRecipientRepository =
+      deps.mentionReportRecipientRepository;
+    this.#mentionReportEmailView = deps.mentionReportEmailView;
+    this.#mentionReportHistoryService = deps.mentionReportHistoryService;
+    this.#emailService = deps.emailService;
+  }
+
+  /**
+   * Checks for new mentions since the last report and sends an email to the recipients.
+   *
+   * @returns {Promise<number>} - A promise that resolves with the number of mentions found.
+   */
+  async sendLatestReport() {
+    const lastReport =
+      await this.#mentionReportHistoryService.getLatestReportDate();
+    const now = new Date();
+
+    if (now.valueOf() - lastReport.valueOf() < 24 * 60 * 60 * 1000) {
+      return 0;
     }
 
-    /**
-     * Checks for new mentions since the last report and sends an email to the recipients.
-     *
-     * @returns {Promise<number>} - A promise that resolves with the number of mentions found.
-     */
-    async sendLatestReport() {
-        const lastReport = await this.#mentionReportHistoryService.getLatestReportDate();
-        const now = new Date();
+    const report = await this.#mentionReportGenerator.getMentionReport(
+      lastReport,
+      now
+    );
 
-        if (now.valueOf() - lastReport.valueOf() < 24 * 60 * 60 * 1000) {
-            return 0;
-        }
+    report.mentions = report.mentions.map((mention) => {
+      return {
+        targetUrl: mention.target,
+        sourceUrl: mention.source,
+        sourceTitle: mention.sourceTitle,
+        sourceExcerpt: mention.sourceExcerpt,
+        sourceSiteTitle: mention.sourceSiteTitle,
+        sourceFavicon: mention.sourceFavicon,
+        sourceAuthor: mention.sourceAuthor,
+        sourceFeaturedImage: mention.sourceFeaturedImage,
+      };
+    });
 
-        const report = await this.#mentionReportGenerator.getMentionReport(lastReport, now);
-
-        report.mentions = report.mentions.map((mention) => {
-            return {
-                targetUrl: mention.target,
-                sourceUrl: mention.source,
-                sourceTitle: mention.sourceTitle,
-                sourceExcerpt: mention.sourceExcerpt,
-                sourceSiteTitle: mention.sourceSiteTitle,
-                sourceFavicon: mention.sourceFavicon,
-                sourceAuthor: mention.sourceAuthor,
-                sourceFeaturedImage: mention.sourceFeaturedImage
-            };
-        });
-
-        if (!report?.mentions?.length) {
-            return 0;
-        }
-
-        const recipients = await this.#mentionReportRecipientRepository.getMentionReportRecipients();
-
-        for (const recipient of recipients) {
-            const subject = await this.#mentionReportEmailView.renderSubject(report, recipient);
-            const html = await this.#mentionReportEmailView.renderHTML(report, recipient);
-            const text = await this.#mentionReportEmailView.renderText(report, recipient);
-
-            await this.#emailService.send(recipient.email, subject, html, text);
-        }
-
-        await this.#mentionReportHistoryService.setLatestReportDate(now);
-
-        return report.mentions.length;
+    if (!report?.mentions?.length) {
+      return 0;
     }
+
+    const recipients =
+      await this.#mentionReportRecipientRepository.getMentionReportRecipients();
+
+    for (const recipient of recipients) {
+      const subject = await this.#mentionReportEmailView.renderSubject(
+        report,
+        recipient
+      );
+      const html = await this.#mentionReportEmailView.renderHTML(
+        report,
+        recipient
+      );
+      const text = await this.#mentionReportEmailView.renderText(
+        report,
+        recipient
+      );
+
+      await this.#emailService.send(recipient.email, subject, html, text);
+    }
+
+    await this.#mentionReportHistoryService.setLatestReportDate(now);
+
+    return report.mentions.length;
+  }
 };
 
 /**

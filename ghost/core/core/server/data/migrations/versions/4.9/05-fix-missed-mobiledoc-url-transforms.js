@@ -2,7 +2,7 @@ const logging = require('@tryghost/logging');
 const urlUtils = require('../../../../../shared/url-utils');
 const htmlToPlaintext = require('@tryghost/html-to-plaintext');
 const mobiledocLib = require('../../../../lib/mobiledoc');
-const {createTransactionalMigration} = require('../../utils');
+const { createTransactionalMigration } = require('../../utils');
 
 // in Ghost versions 4.6.1-4.8.4 the 4.0 migration that transformed URLs had a bug
 // that meant urls inside cards in mobiledoc content was not being transformed
@@ -12,76 +12,81 @@ const {createTransactionalMigration} = require('../../utils');
 // and plaintext contents
 
 module.exports = createTransactionalMigration(
-    async function up(knex) {
-        const badVersionUsedFor40Migration = await knex('migrations')
-            .where({
-                name: '18-transform-urls-absolute-to-transform-ready.js'
-            })
-            .whereIn('currentVersion', ['4.6', '4.7', '4.8'])
-            .first();
+  async function up(knex) {
+    const badVersionUsedFor40Migration = await knex('migrations')
+      .where({
+        name: '18-transform-urls-absolute-to-transform-ready.js',
+      })
+      .whereIn('currentVersion', ['4.6', '4.7', '4.8'])
+      .first();
 
-        if (!badVersionUsedFor40Migration) {
-            logging.info('Skipping transform of mobiledoc URLs - original transform was good');
-            return;
+    if (!badVersionUsedFor40Migration) {
+      logging.info(
+        'Skipping transform of mobiledoc URLs - original transform was good'
+      );
+      return;
+    }
+
+    logging.info(
+      'Transforming all internal URLs in posts.{mobiledoc,html,plaintext} to transform-ready'
+    );
+
+    await knex.transaction(async (trx) => {
+      const postIdRows = await knex('posts')
+        .transacting(trx)
+        .forUpdate()
+        .select('id');
+
+      // eslint-disable-next-line no-restricted-syntax
+      for (const postIdRow of postIdRows) {
+        const { id } = postIdRow;
+        const [post] = await knex('posts')
+          .transacting(trx)
+          .where({ id })
+          .select(['mobiledoc']);
+
+        let mobiledoc;
+        let html;
+
+        try {
+          mobiledoc = urlUtils.mobiledocToTransformReady(post.mobiledoc, {
+            cardTransformers: mobiledocLib.cards,
+          });
+
+          if (!mobiledoc) {
+            logging.warn(`No mobiledoc for ${id}. Skipping.`);
+            continue;
+          }
+        } catch (err) {
+          logging.warn(`Invalid mobiledoc JSON structure for ${id}. Skipping`);
+          continue;
         }
 
-        logging.info('Transforming all internal URLs in posts.{mobiledoc,html,plaintext} to transform-ready');
+        try {
+          html = mobiledocLib.mobiledocHtmlRenderer.render(
+            JSON.parse(mobiledoc)
+          );
+        } catch (err) {
+          logging.warn(
+            `Invalid mobiledoc content structure for ${id}, unable to render. Skipping`
+          );
+          continue;
+        }
 
-        await knex.transaction(async (trx) => {
-            const postIdRows = await knex('posts')
-                .transacting(trx)
-                .forUpdate()
-                .select('id');
+        const plaintext = htmlToPlaintext.excerpt(html);
 
-            // eslint-disable-next-line no-restricted-syntax
-            for (const postIdRow of postIdRows) {
-                const {id} = postIdRow;
-                const [post] = await knex('posts')
-                    .transacting(trx)
-                    .where({id})
-                    .select([
-                        'mobiledoc'
-                    ]);
-
-                let mobiledoc;
-                let html;
-
-                try {
-                    mobiledoc = urlUtils.mobiledocToTransformReady(post.mobiledoc, {cardTransformers: mobiledocLib.cards});
-
-                    if (!mobiledoc) {
-                        logging.warn(`No mobiledoc for ${id}. Skipping.`);
-                        continue;
-                    }
-                } catch (err) {
-                    logging.warn(`Invalid mobiledoc JSON structure for ${id}. Skipping`);
-                    continue;
-                }
-
-                try {
-                    html = mobiledocLib.mobiledocHtmlRenderer.render(JSON.parse(mobiledoc));
-                } catch (err) {
-                    logging.warn(`Invalid mobiledoc content structure for ${id}, unable to render. Skipping`);
-                    continue;
-                }
-
-                const plaintext = htmlToPlaintext.excerpt(html);
-
-                await knex('posts')
-                    .transacting(trx)
-                    .where({id})
-                    .update({
-                        mobiledoc,
-                        html,
-                        plaintext
-                    });
-            }
-
-            return 'transaction complete';
+        await knex('posts').transacting(trx).where({ id }).update({
+          mobiledoc,
+          html,
+          plaintext,
         });
-    },
+      }
 
-    async function down() {
-        // noop
-    }
+      return 'transaction complete';
+    });
+  },
+
+  async function down() {
+    // noop
+  }
 );

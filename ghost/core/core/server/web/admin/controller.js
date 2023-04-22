@@ -8,11 +8,11 @@ const config = require('../../../shared/config');
 const updateCheck = require('../../update-check');
 
 const messages = {
-    templateError: {
-        message: 'Unable to find admin template file {templatePath}',
-        context: 'These template files are generated as part of the build process',
-        help: 'Please see {link}'
-    }
+  templateError: {
+    message: 'Unable to find admin template file {templatePath}',
+    context: 'These template files are generated as part of the build process',
+    help: 'Please see {link}',
+  },
 };
 
 /**
@@ -24,39 +24,44 @@ const messages = {
  * @param res
  */
 module.exports = function adminController(req, res) {
-    debug('index called');
+  debug('index called');
 
-    // CASE: trigger update check unit and let it run in background, don't block the admin rendering
-    updateCheck();
+  // CASE: trigger update check unit and let it run in background, don't block the admin rendering
+  updateCheck();
 
-    const templatePath = path.resolve(config.get('paths').adminAssets, 'index.html');
-    const headers = {};
+  const templatePath = path.resolve(
+    config.get('paths').adminAssets,
+    'index.html'
+  );
+  const headers = {};
 
-    try {
-        // Generate our own ETag header
-        //   `sendFile` by default uses filesize+lastmod date to generate an etag.
-        //   That doesn't work for admin templates because the filesize doesn't change between versions
-        //   and `npm pack` sets a fixed lastmod date for every file meaning the default etag never changes
-        const fileBuffer = fs.readFileSync(templatePath);
-        const hashSum = crypto.createHash('md5');
-        hashSum.update(fileBuffer);
-        headers.ETag = hashSum.digest('hex');
+  try {
+    // Generate our own ETag header
+    //   `sendFile` by default uses filesize+lastmod date to generate an etag.
+    //   That doesn't work for admin templates because the filesize doesn't change between versions
+    //   and `npm pack` sets a fixed lastmod date for every file meaning the default etag never changes
+    const fileBuffer = fs.readFileSync(templatePath);
+    const hashSum = crypto.createHash('md5');
+    hashSum.update(fileBuffer);
+    headers.ETag = hashSum.digest('hex');
 
-        if (config.get('adminFrameProtection')) {
-            headers['X-Frame-Options'] = 'sameorigin';
-        }
-
-        res.sendFile(templatePath, {headers});
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            throw new errors.IncorrectUsageError({
-                message: tpl(messages.templateError.message, {templatePath}),
-                context: tpl(messages.templateError.context),
-                help: tpl(messages.templateError.help, {link: 'https://ghost.org/docs/install/source/'}),
-                error: error
-            });
-        } else {
-            throw error;
-        }
+    if (config.get('adminFrameProtection')) {
+      headers['X-Frame-Options'] = 'sameorigin';
     }
+
+    res.sendFile(templatePath, { headers });
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new errors.IncorrectUsageError({
+        message: tpl(messages.templateError.message, { templatePath }),
+        context: tpl(messages.templateError.context),
+        help: tpl(messages.templateError.help, {
+          link: 'https://ghost.org/docs/install/source/',
+        }),
+        error: error,
+      });
+    } else {
+      throw error;
+    }
+  }
 };

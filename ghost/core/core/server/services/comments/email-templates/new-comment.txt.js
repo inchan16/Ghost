@@ -1,6 +1,6 @@
 module.exports = function (data) {
-    // Be careful when you indent the email, because whitespaces are visible in emails!
-    return `
+  // Be careful when you indent the email, because whitespaces are visible in emails!
+  return `
 Hey there,
 
 Someone just posted a comment on your post "${data.postTitle}"

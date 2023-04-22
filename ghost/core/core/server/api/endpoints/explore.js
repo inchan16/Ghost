@@ -1,12 +1,12 @@
 const exploreService = require('../../services/explore');
 
 module.exports = {
-    docName: 'explore',
+  docName: 'explore',
 
-    read: {
-        permissions: true,
-        query() {
-            return exploreService.fetchData();
-        }
-    }
+  read: {
+    permissions: true,
+    query() {
+      return exploreService.fetchData();
+    },
+  },
 };

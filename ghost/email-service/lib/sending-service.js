@@ -55,106 +55,113 @@ const logging = require('@tryghost/logging');
  */
 
 class SendingService {
-    #emailProvider;
-    #emailRenderer;
+  #emailProvider;
+  #emailRenderer;
+
+  /**
+   * @param {object} dependencies
+   * @param {IEmailProviderService} dependencies.emailProvider
+   * @param {EmailRenderer} dependencies.emailRenderer
+   */
+  constructor({ emailProvider, emailRenderer }) {
+    this.#emailProvider = emailProvider;
+    this.#emailRenderer = emailRenderer;
+  }
+
+  getMaximumRecipients() {
+    return this.#emailProvider.getMaximumRecipients();
+  }
+
+  /**
+   * Send a given post, rendered for a given newsletter and segment to the members provided in the list
+   * @param {object} data
+   * @param {Post} data.post
+   * @param {Newsletter} data.newsletter
+   * @param {string|null} data.segment
+   * @param {string|null} data.emailId
+   * @param {MemberLike[]} data.members
+   * @param {EmailSendingOptions} options
+   * @returns {Promise<EmailProviderSuccessResponse>}
+   */
+  async send({ post, newsletter, segment, members, emailId }, options) {
+    const cacheId = emailId + '-' + (segment ?? 'null');
 
     /**
-     * @param {object} dependencies
-     * @param {IEmailProviderService} dependencies.emailProvider
-     * @param {EmailRenderer} dependencies.emailRenderer
+     * @type {EmailBody | null}
      */
-    constructor({
-        emailProvider,
-        emailRenderer
-    }) {
-        this.#emailProvider = emailProvider;
-        this.#emailRenderer = emailRenderer;
+    let emailBody = null;
+
+    if (options.emailBodyCache) {
+      emailBody = options.emailBodyCache.get(cacheId);
     }
 
-    getMaximumRecipients() {
-        return this.#emailProvider.getMaximumRecipients();
-    }
-
-    /**
-     * Send a given post, rendered for a given newsletter and segment to the members provided in the list
-     * @param {object} data
-     * @param {Post} data.post
-     * @param {Newsletter} data.newsletter
-     * @param {string|null} data.segment
-     * @param {string|null} data.emailId
-     * @param {MemberLike[]} data.members
-     * @param {EmailSendingOptions} options
-     * @returns {Promise<EmailProviderSuccessResponse>}
-    */
-    async send({post, newsletter, segment, members, emailId}, options) {
-        const cacheId = emailId + '-' + (segment ?? 'null');
-
-        /**
-         * @type {EmailBody | null}
-         */
-        let emailBody = null;
-
-        if (options.emailBodyCache) {
-            emailBody = options.emailBodyCache.get(cacheId);
+    if (!emailBody) {
+      emailBody = await this.#emailRenderer.renderBody(
+        post,
+        newsletter,
+        segment,
+        {
+          clickTrackingEnabled: !!options.clickTrackingEnabled,
         }
-
-        if (!emailBody) {
-            emailBody = await this.#emailRenderer.renderBody(
-                post,
-                newsletter,
-                segment,
-                {
-                    clickTrackingEnabled: !!options.clickTrackingEnabled
-                }
-            );
-            if (options.emailBodyCache) {
-                options.emailBodyCache.set(cacheId, emailBody);
-            }
-        }
-
-        const recipients = this.buildRecipients(members, emailBody.replacements);
-        return await this.#emailProvider.send({
-            subject: this.#emailRenderer.getSubject(post),
-            from: this.#emailRenderer.getFromAddress(post, newsletter),
-            replyTo: this.#emailRenderer.getReplyToAddress(post, newsletter) ?? undefined,
-            html: emailBody.html,
-            plaintext: emailBody.plaintext,
-            recipients,
-            emailId: emailId,
-            replacementDefinitions: emailBody.replacements
-        }, {
-            clickTrackingEnabled: !!options.clickTrackingEnabled,
-            openTrackingEnabled: !!options.openTrackingEnabled
-        });
+      );
+      if (options.emailBodyCache) {
+        options.emailBodyCache.set(cacheId, emailBody);
+      }
     }
 
-    /**
-     * @private
-     * @param {MemberLike[]} members
-     * @param {import("./email-renderer").ReplacementDefinition[]} replacementDefinitions
-     * @returns {Recipient[]}
-     */
-    buildRecipients(members, replacementDefinitions) {
-        return members.map((member) => {
+    const recipients = this.buildRecipients(members, emailBody.replacements);
+    return await this.#emailProvider.send(
+      {
+        subject: this.#emailRenderer.getSubject(post),
+        from: this.#emailRenderer.getFromAddress(post, newsletter),
+        replyTo:
+          this.#emailRenderer.getReplyToAddress(post, newsletter) ?? undefined,
+        html: emailBody.html,
+        plaintext: emailBody.plaintext,
+        recipients,
+        emailId: emailId,
+        replacementDefinitions: emailBody.replacements,
+      },
+      {
+        clickTrackingEnabled: !!options.clickTrackingEnabled,
+        openTrackingEnabled: !!options.openTrackingEnabled,
+      }
+    );
+  }
+
+  /**
+   * @private
+   * @param {MemberLike[]} members
+   * @param {import("./email-renderer").ReplacementDefinition[]} replacementDefinitions
+   * @returns {Recipient[]}
+   */
+  buildRecipients(members, replacementDefinitions) {
+    return members
+      .map((member) => {
+        return {
+          email: member.email?.trim(),
+          replacements: replacementDefinitions.map((def) => {
             return {
-                email: member.email?.trim(),
-                replacements: replacementDefinitions.map((def) => {
-                    return {
-                        id: def.id,
-                        token: def.token,
-                        value: def.getValue(member) || ''
-                    };
-                })
+              id: def.id,
+              token: def.token,
+              value: def.getValue(member) || '',
             };
-        }).filter((recipient) => {
-            // Remove invalid recipient email addresses
-            const isValidRecipient = validator.isEmail(recipient.email, {legacy: false});
-            if (!isValidRecipient) {
-                logging.warn(`Removed recipient ${recipient.email} from list because it is not a valid email address`);
-            }
-            return isValidRecipient;
+          }),
+        };
+      })
+      .filter((recipient) => {
+        // Remove invalid recipient email addresses
+        const isValidRecipient = validator.isEmail(recipient.email, {
+          legacy: false,
         });
-    }
+        if (!isValidRecipient) {
+          logging.warn(
+            `Removed recipient ${recipient.email} from list because it is not a valid email address`
+          );
+        }
+        return isValidRecipient;
+      });
+  }
 }
 
 module.exports = SendingService;

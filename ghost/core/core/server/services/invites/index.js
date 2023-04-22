@@ -4,7 +4,7 @@ const urlUtils = require('../../../shared/url-utils');
 const Invites = require('./invites');
 
 module.exports = new Invites({
-    settingsCache,
-    mailService,
-    urlUtils
+  settingsCache,
+  mailService,
+  urlUtils,
 });

@@ -1,4 +1,4 @@
-import {computed} from '@ember/object';
+import { computed } from '@ember/object';
 
 /**
  * Defines a property similarly to `Ember.computed.oneway`,
@@ -11,19 +11,19 @@ import {computed} from '@ember/object';
  * @param {function} transform a function to transform the **upstream** value.
  */
 export default function (upstream, transform) {
-    if (typeof transform !== 'function') {
-        // default to the identity function
-        transform = function (value) {
-            return value;
-        };
-    }
+  if (typeof transform !== 'function') {
+    // default to the identity function
+    transform = function (value) {
+      return value;
+    };
+  }
 
-    return computed(upstream, {
-        get() {
-            return transform(this.get(upstream));
-        },
-        set(key, value) {
-            return value;
-        }
-    });
+  return computed(upstream, {
+    get() {
+      return transform(this.get(upstream));
+    },
+    set(key, value) {
+      return value;
+    },
+  });
 }

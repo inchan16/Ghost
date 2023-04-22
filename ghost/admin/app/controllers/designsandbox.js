@@ -1,4 +1,3 @@
 import Controller from '@ember/controller';
 
-export default class DesignsandboxController extends Controller {
-}
+export default class DesignsandboxController extends Controller {}

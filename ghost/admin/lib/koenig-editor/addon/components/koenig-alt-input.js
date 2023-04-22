@@ -1,87 +1,87 @@
 import Component from '@ember/component';
 import classic from 'ember-classic-decorator';
-import {action, computed} from '@ember/object';
-import {classNameBindings, tagName} from '@ember-decorators/component';
-import {kgStyle} from '../helpers/kg-style';
-import {inject as service} from '@ember/service';
+import { action, computed } from '@ember/object';
+import { classNameBindings, tagName } from '@ember-decorators/component';
+import { kgStyle } from '../helpers/kg-style';
+import { inject as service } from '@ember/service';
 
 @classic
 @tagName('figcaption')
 @classNameBindings('figCaptionClass')
 export default class KoenigAltInput extends Component {
-    @service koenigUi;
+  @service koenigUi;
 
-    alt = '';
-    placeholder = '';
+  alt = '';
+  placeholder = '';
 
-    update() {}
-    addParagraphAfterCard() {}
-    moveCursorToNextSection() {}
-    moveCursorToPrevSection() {}
+  update() {}
+  addParagraphAfterCard() {}
+  moveCursorToNextSection() {}
+  moveCursorToPrevSection() {}
 
-    @computed
-    get figCaptionClass() {
-        return `${kgStyle(['figcaption'])} w-100 relative`;
+  @computed
+  get figCaptionClass() {
+    return `${kgStyle(['figcaption'])} w-100 relative`;
+  }
+
+  didInsertElement() {
+    super.didInsertElement(...arguments);
+    this.element.querySelector('input').focus();
+  }
+
+  willDestroyElement() {
+    super.willDestroyElement(...arguments);
+    this.koenigUi.captionLostFocus(this);
+  }
+
+  @action
+  onInput(event) {
+    this.update(event.target.value);
+  }
+
+  @action
+  onKeydown(event) {
+    let { selectionStart, selectionEnd, value } = event.target;
+    let noSelection = selectionStart === selectionEnd;
+
+    let { altKey, ctrlKey, metaKey, shiftKey } = event;
+    let hasModifier = altKey || ctrlKey || metaKey || shiftKey;
+
+    if (hasModifier) {
+      return;
     }
 
-    didInsertElement() {
-        super.didInsertElement(...arguments);
-        this.element.querySelector('input').focus();
-    }
+    switch (event.key) {
+      case 'Enter':
+        event.preventDefault();
+        event.target.blur();
+        this.addParagraphAfterCard();
+        break;
 
-    willDestroyElement() {
-        super.willDestroyElement(...arguments);
-        this.koenigUi.captionLostFocus(this);
-    }
+      case 'Escape':
+        event.target.blur();
+        break;
 
-    @action
-    onInput(event) {
-        this.update(event.target.value);
-    }
-
-    @action
-    onKeydown(event) {
-        let {selectionStart, selectionEnd, value} = event.target;
-        let noSelection = selectionStart === selectionEnd;
-
-        let {altKey, ctrlKey, metaKey, shiftKey} = event;
-        let hasModifier = altKey || ctrlKey || metaKey || shiftKey;
-
-        if (hasModifier) {
-            return;
+      case 'ArrowUp':
+      case 'ArrowLeft':
+        if (noSelection && selectionStart === 0) {
+          event.preventDefault();
+          event.target.blur();
+          this.moveCursorToPrevSection();
         }
+        break;
 
-        switch (event.key) {
-        case 'Enter':
-            event.preventDefault();
-            event.target.blur();
-            this.addParagraphAfterCard();
-            break;
-
-        case 'Escape':
-            event.target.blur();
-            break;
-
-        case 'ArrowUp':
-        case 'ArrowLeft':
-            if (noSelection && selectionStart === 0) {
-                event.preventDefault();
-                event.target.blur();
-                this.moveCursorToPrevSection();
-            }
-            break;
-
-        case 'ArrowRight':
-        case 'ArrowDown':
-            if (noSelection && selectionEnd === value.length) {
-                event.preventDefault();
-                event.target.blur();
-                this.moveCursorToNextSection();
-            }
-            break;
-
-        default:
-            break;
+      case 'ArrowRight':
+      case 'ArrowDown':
+        if (noSelection && selectionEnd === value.length) {
+          event.preventDefault();
+          event.target.blur();
+          this.moveCursorToNextSection();
         }
+        break;
+
+      default:
+        break;
     }
+  }
 }

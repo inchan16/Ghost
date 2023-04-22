@@ -2,9 +2,9 @@
 'use strict';
 
 module.exports = {
-    name: 'ember-power-calendar-utils',
+  name: 'ember-power-calendar-utils',
 
-    isDevelopingAddon() {
-        return true;
-    }
+  isDevelopingAddon() {
+    return true;
+  },
 };

@@ -1,4 +1,4 @@
-import {GlobalStyles} from './Global.styles';
+import { GlobalStyles } from './Global.styles';
 
 const NotificationStyles = `
     .gh-portal-notification-wrapper {
@@ -133,8 +133,6 @@ const NotificationStyles = `
     }
 `;
 
-const NotificationStyle =
-    GlobalStyles +
-    NotificationStyles;
+const NotificationStyle = GlobalStyles + NotificationStyles;
 
 export default NotificationStyle;

@@ -1,5 +1,5 @@
-import {Model, hasMany} from 'miragejs';
+import { Model, hasMany } from 'miragejs';
 
 export default Model.extend({
-    posts: hasMany()
+  posts: hasMany(),
 });

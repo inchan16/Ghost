@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import AppContext from '../../AppContext';
 
 export const SwitchStyles = `
@@ -72,30 +72,43 @@ export const SwitchStyles = `
     }
 `;
 
-function Switch({id, label = '', onToggle, checked = false, dataTestId = 'switch-input'}) {
-    const {action} = useContext(AppContext);
-    const [isChecked, setIsChecked] = useState(checked);
-    const isActionChanged = ['updateNewsletter:failed', 'updateNewsletter:success'].includes(action);
-    useEffect(() => {
-        setIsChecked(checked);
-    }, [checked, isActionChanged]);
-    return (
-        <div className="gh-portal-for-switch" data-test-switch={dataTestId}>
-            <label className="switch" htmlFor={id}>
-                <input
-                    type="checkbox"
-                    checked={isChecked}
-                    id={id}
-                    onChange={() => {}}
-                    aria-label={label}
-                />
-                <span className="input-toggle-component" onClick={(e) => {
-                    setIsChecked(!isChecked);
-                    onToggle(e, !isChecked);
-                }} data-testid={dataTestId}></span>
-            </label>
-        </div>
-    );
+function Switch({
+  id,
+  label = '',
+  onToggle,
+  checked = false,
+  dataTestId = 'switch-input',
+}) {
+  const { action } = useContext(AppContext);
+  const [isChecked, setIsChecked] = useState(checked);
+  const isActionChanged = [
+    'updateNewsletter:failed',
+    'updateNewsletter:success',
+  ].includes(action);
+  useEffect(() => {
+    setIsChecked(checked);
+  }, [checked, isActionChanged]);
+  return (
+    <div className="gh-portal-for-switch" data-test-switch={dataTestId}>
+      <label className="switch" htmlFor={id}>
+        <input
+          type="checkbox"
+          checked={isChecked}
+          id={id}
+          onChange={() => {}}
+          aria-label={label}
+        />
+        <span
+          className="input-toggle-component"
+          onClick={(e) => {
+            setIsChecked(!isChecked);
+            onToggle(e, !isChecked);
+          }}
+          data-testid={dataTestId}
+        ></span>
+      </label>
+    </div>
+  );
 }
 
 export default Switch;

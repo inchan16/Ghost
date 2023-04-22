@@ -11,34 +11,34 @@ const routes = require('./routes');
 const APIVersionCompatibilityService = require('../../../../services/api-version-compatibility');
 
 module.exports = function setupApiApp() {
-    debug('Admin API setup start');
-    const apiApp = express('admin api');
+  debug('Admin API setup start');
+  const apiApp = express('admin api');
 
-    // API middleware
+  // API middleware
 
-    // Body parsing
-    apiApp.use(bodyParser.json({limit: '50mb'}));
-    apiApp.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
+  // Body parsing
+  apiApp.use(bodyParser.json({ limit: '50mb' }));
+  apiApp.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-    // Query parsing
-    apiApp.use(boolParser());
+  // Query parsing
+  apiApp.use(boolParser());
 
-    // Check version matches for API requests, depends on res.locals.safeVersion being set
-    // Therefore must come after themeHandler.ghostLocals, for now
-    apiApp.use(versionMatch);
+  // Check version matches for API requests, depends on res.locals.safeVersion being set
+  // Therefore must come after themeHandler.ghostLocals, for now
+  apiApp.use(versionMatch);
 
-    // Admin API shouldn't be cached
-    apiApp.use(shared.middleware.cacheControl('private'));
+  // Admin API shouldn't be cached
+  apiApp.use(shared.middleware.cacheControl('private'));
 
-    // Routing
-    apiApp.use(routes());
+  // Routing
+  apiApp.use(routes());
 
-    // API error handling
-    apiApp.use(errorHandler.resourceNotFound);
-    apiApp.use(APIVersionCompatibilityService.errorHandler);
-    apiApp.use(errorHandler.handleJSONResponse(sentry));
+  // API error handling
+  apiApp.use(errorHandler.resourceNotFound);
+  apiApp.use(APIVersionCompatibilityService.errorHandler);
+  apiApp.use(errorHandler.handleJSONResponse(sentry));
 
-    debug('Admin API setup end');
+  debug('Admin API setup end');
 
-    return apiApp;
+  return apiApp;
 };

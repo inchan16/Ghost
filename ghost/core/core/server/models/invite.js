@@ -9,114 +9,144 @@ const limitService = require('../services/limits');
 const ghostBookshelf = require('./base');
 
 const messages = {
-    notEnoughPermission: 'You do not have permission to perform this action',
-    roleNotFound: 'Role not found',
-    notAllowedToInviteOwner: 'Not allowed to invite an owner user.',
-    notAllowedToInvite: 'Not allowed to invite this role.'
+  notEnoughPermission: 'You do not have permission to perform this action',
+  roleNotFound: 'Role not found',
+  notAllowedToInviteOwner: 'Not allowed to invite an owner user.',
+  notAllowedToInvite: 'Not allowed to invite this role.',
 };
 
 let Invite;
 let Invites;
 
-Invite = ghostBookshelf.Model.extend({
+Invite = ghostBookshelf.Model.extend(
+  {
     tableName: 'invites',
 
     toJSON: function (unfilteredOptions) {
-        const options = Invite.filterOptions(unfilteredOptions, 'toJSON');
-        const attrs = ghostBookshelf.Model.prototype.toJSON.call(this, options);
+      const options = Invite.filterOptions(unfilteredOptions, 'toJSON');
+      const attrs = ghostBookshelf.Model.prototype.toJSON.call(this, options);
 
-        delete attrs.token;
-        return attrs;
-    }
-}, {
+      delete attrs.token;
+      return attrs;
+    },
+  },
+  {
     orderDefaultOptions: function orderDefaultOptions() {
-        return {};
+      return {};
     },
 
     add: function add(data, unfilteredOptions) {
-        const options = Invite.filterOptions(unfilteredOptions, 'add');
-        data = data || {};
+      const options = Invite.filterOptions(unfilteredOptions, 'add');
+      data = data || {};
 
-        if (!options.context || !options.context.internal) {
-            data.status = 'pending';
-        }
+      if (!options.context || !options.context.internal) {
+        data.status = 'pending';
+      }
 
-        data.expires = Date.now() + constants.ONE_WEEK_MS;
-        data.token = security.tokens.generateFromEmail({
-            email: data.email,
-            expires: data.expires,
-            secret: settingsCache.get('db_hash')
-        });
+      data.expires = Date.now() + constants.ONE_WEEK_MS;
+      data.token = security.tokens.generateFromEmail({
+        email: data.email,
+        expires: data.expires,
+        secret: settingsCache.get('db_hash'),
+      });
 
-        return ghostBookshelf.Model.add.call(this, data, options);
+      return ghostBookshelf.Model.add.call(this, data, options);
     },
 
-    async permissible(inviteModel, action, context, unsafeAttrs, loadedPermissions, hasUserPermission, hasApiKeyPermission) {
-        const isAdd = (action === 'add');
+    async permissible(
+      inviteModel,
+      action,
+      context,
+      unsafeAttrs,
+      loadedPermissions,
+      hasUserPermission,
+      hasApiKeyPermission
+    ) {
+      const isAdd = action === 'add';
 
-        if (!isAdd) {
-            if (hasUserPermission && hasApiKeyPermission) {
-                return Promise.resolve();
-            }
-
-            return Promise.reject(new errors.NoPermissionError({
-                message: tpl(messages.notEnoughPermission)
-            }));
+      if (!isAdd) {
+        if (hasUserPermission && hasApiKeyPermission) {
+          return Promise.resolve();
         }
 
-        // CASE: make sure user is allowed to add a user with this role
-        return ghostBookshelf.model('Role')
-            .findOne({id: unsafeAttrs.role_id})
-            .then(async (roleToInvite) => {
-                if (!roleToInvite) {
-                    return Promise.reject(new errors.NotFoundError({
-                        message: tpl(messages.roleNotFound)
-                    }));
-                }
+        return Promise.reject(
+          new errors.NoPermissionError({
+            message: tpl(messages.notEnoughPermission),
+          })
+        );
+      }
 
-                if (roleToInvite.get('name') === 'Owner') {
-                    return Promise.reject(new errors.NoPermissionError({
-                        message: tpl(messages.notAllowedToInviteOwner)
-                    }));
-                }
+      // CASE: make sure user is allowed to add a user with this role
+      return ghostBookshelf
+        .model('Role')
+        .findOne({ id: unsafeAttrs.role_id })
+        .then(async (roleToInvite) => {
+          if (!roleToInvite) {
+            return Promise.reject(
+              new errors.NotFoundError({
+                message: tpl(messages.roleNotFound),
+              })
+            );
+          }
 
-                if (isAdd && limitService.isLimited('staff') && roleToInvite.get('name') !== 'Contributor') {
-                    // CASE: if your site is limited to a certain number of staff users
-                    // Inviting a new user requires we check we won't go over the limit
-                    await limitService.errorIfWouldGoOverLimit('staff');
-                }
+          if (roleToInvite.get('name') === 'Owner') {
+            return Promise.reject(
+              new errors.NoPermissionError({
+                message: tpl(messages.notAllowedToInviteOwner),
+              })
+            );
+          }
 
-                let allowed = [];
+          if (
+            isAdd &&
+            limitService.isLimited('staff') &&
+            roleToInvite.get('name') !== 'Contributor'
+          ) {
+            // CASE: if your site is limited to a certain number of staff users
+            // Inviting a new user requires we check we won't go over the limit
+            await limitService.errorIfWouldGoOverLimit('staff');
+          }
 
-                if (_.some(loadedPermissions.user.roles, {name: 'Owner'}) ||
-                    _.some(loadedPermissions.user.roles, {name: 'Administrator'})) {
-                    allowed = ['Administrator', 'Editor', 'Author', 'Contributor'];
-                } else if (_.some(loadedPermissions.user.roles, {name: 'Editor'})) {
-                    allowed = ['Author', 'Contributor'];
-                }
+          let allowed = [];
 
-                if (allowed.indexOf(roleToInvite.get('name')) === -1) {
-                    throw new errors.NoPermissionError({
-                        message: tpl(messages.notAllowedToInvite)
-                    });
-                }
+          if (
+            _.some(loadedPermissions.user.roles, {
+              name: 'Owner',
+            }) ||
+            _.some(loadedPermissions.user.roles, {
+              name: 'Administrator',
+            })
+          ) {
+            allowed = ['Administrator', 'Editor', 'Author', 'Contributor'];
+          } else if (_.some(loadedPermissions.user.roles, { name: 'Editor' })) {
+            allowed = ['Author', 'Contributor'];
+          }
 
-                if (hasUserPermission && hasApiKeyPermission) {
-                    return Promise.resolve();
-                }
-
-                return Promise.reject(new errors.NoPermissionError({
-                    message: tpl(messages.notEnoughPermission)
-                }));
+          if (allowed.indexOf(roleToInvite.get('name')) === -1) {
+            throw new errors.NoPermissionError({
+              message: tpl(messages.notAllowedToInvite),
             });
-    }
-});
+          }
+
+          if (hasUserPermission && hasApiKeyPermission) {
+            return Promise.resolve();
+          }
+
+          return Promise.reject(
+            new errors.NoPermissionError({
+              message: tpl(messages.notEnoughPermission),
+            })
+          );
+        });
+    },
+  }
+);
 
 Invites = ghostBookshelf.Collection.extend({
-    model: Invite
+  model: Invite,
 });
 
 module.exports = {
-    Invite: ghostBookshelf.model('Invite', Invite),
-    Invites: ghostBookshelf.collection('Invites', Invites)
+  Invite: ghostBookshelf.model('Invite', Invite),
+  Invites: ghostBookshelf.collection('Invites', Invites),
 };

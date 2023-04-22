@@ -1,56 +1,52 @@
 const statsService = require('../../services/stats');
 
 module.exports = {
-    docName: 'stats',
-    memberCountHistory: {
-        permissions: {
-            docName: 'members',
-            method: 'browse'
-        },
-        async query() {
-            return await statsService.getMemberCountHistory();
-        }
+  docName: 'stats',
+  memberCountHistory: {
+    permissions: {
+      docName: 'members',
+      method: 'browse',
     },
-    mrr: {
-        permissions: {
-            docName: 'members',
-            method: 'browse'
-        },
-        async query() {
-            return await statsService.getMRRHistory();
-        }
+    async query() {
+      return await statsService.getMemberCountHistory();
     },
-    subscriptions: {
-        permissions: {
-            docName: 'members',
-            method: 'browse'
-        },
-        async query() {
-            return await statsService.getSubscriptionCountHistory();
-        }
+  },
+  mrr: {
+    permissions: {
+      docName: 'members',
+      method: 'browse',
     },
-    postReferrers: {
-        data: [
-            'id'
-        ],
-        permissions: {
-            docName: 'posts',
-            method: 'browse'
-        },
-        async query(frame) {
-            return await statsService.getPostReferrers(frame.data.id);
-        }
+    async query() {
+      return await statsService.getMRRHistory();
     },
-    referrersHistory: {
-        data: [
-            'id'
-        ],
-        permissions: {
-            docName: 'posts',
-            method: 'browse'
-        },
-        async query() {
-            return await statsService.getReferrersHistory();
-        }
-    }
+  },
+  subscriptions: {
+    permissions: {
+      docName: 'members',
+      method: 'browse',
+    },
+    async query() {
+      return await statsService.getSubscriptionCountHistory();
+    },
+  },
+  postReferrers: {
+    data: ['id'],
+    permissions: {
+      docName: 'posts',
+      method: 'browse',
+    },
+    async query(frame) {
+      return await statsService.getPostReferrers(frame.data.id);
+    },
+  },
+  referrersHistory: {
+    data: ['id'],
+    permissions: {
+      docName: 'posts',
+      method: 'browse',
+    },
+    async query() {
+      return await statsService.getReferrersHistory();
+    },
+  },
 };

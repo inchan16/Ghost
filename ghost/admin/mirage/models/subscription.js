@@ -1,7 +1,7 @@
-import {Model, belongsTo} from 'miragejs';
+import { Model, belongsTo } from 'miragejs';
 
 export default Model.extend({
-    member: belongsTo(),
-    tier: belongsTo(),
-    offer: belongsTo()
+  member: belongsTo(),
+  tier: belongsTo(),
+  offer: belongsTo(),
 });

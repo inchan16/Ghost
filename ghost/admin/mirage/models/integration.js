@@ -1,6 +1,6 @@
-import {Model, hasMany} from 'miragejs';
+import { Model, hasMany } from 'miragejs';
 
 export default Model.extend({
-    apiKeys: hasMany(),
-    webhooks: hasMany()
+  apiKeys: hasMany(),
+  webhooks: hasMany(),
 });

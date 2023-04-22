@@ -9,22 +9,22 @@ const templates = require('./templates');
  * @param {Object} data
  */
 module.exports = function renderer(req, res, data) {
-    // Set response context
-    setContext(req, res, data);
+  // Set response context
+  setContext(req, res, data);
 
-    // Set template
-    templates.setTemplate(req, res, data);
+  // Set template
+  templates.setTemplate(req, res, data);
 
-    debug('Rendering template: ' + res._template + ' for: ' + req.originalUrl);
-    debug('res.locals', res.locals);
+  debug('Rendering template: ' + res._template + ' for: ' + req.originalUrl);
+  debug('res.locals', res.locals);
 
-    // CASE: You can set the content type of the page in your routes.yaml file
-    if (res.routerOptions && res.routerOptions.contentType) {
-        if (res.routerOptions.templates.indexOf(res._template) !== -1) {
-            res.type(res.routerOptions.contentType);
-        }
+  // CASE: You can set the content type of the page in your routes.yaml file
+  if (res.routerOptions && res.routerOptions.contentType) {
+    if (res.routerOptions.templates.indexOf(res._template) !== -1) {
+      res.type(res.routerOptions.contentType);
     }
+  }
 
-    // Render Call
-    res.render(res._template, data);
+  // Render Call
+  res.render(res._template, data);
 };

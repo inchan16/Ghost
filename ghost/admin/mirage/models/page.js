@@ -1,5 +1,3 @@
 import PostModel from './post';
 
-export default PostModel.extend({
-
-});
+export default PostModel.extend({});

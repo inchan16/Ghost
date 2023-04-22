@@ -1,101 +1,107 @@
 import AuthenticatedRoute from 'ghost-admin/routes/authenticated';
 import ConfirmUnsavedChangesModal from '../../../components/modals/confirm-unsaved-changes';
-import {action} from '@ember/object';
-import {inject as service} from '@ember/service';
+import { action } from '@ember/object';
+import { inject as service } from '@ember/service';
 
 export default class UserRoute extends AuthenticatedRoute {
-    @service modals;
+  @service modals;
 
-    model(params) {
-        return this.store.queryRecord('user', {slug: params.user_slug, include: 'count.posts'});
+  model(params) {
+    return this.store.queryRecord('user', {
+      slug: params.user_slug,
+      include: 'count.posts',
+    });
+  }
+
+  afterModel(user) {
+    super.afterModel(...arguments);
+
+    const currentUser = this.session.user;
+
+    let isOwnProfile = user.id === currentUser.id;
+    let isAuthorOrContributor = currentUser.isAuthorOrContributor;
+    let isEditor = currentUser.isEditor;
+
+    if (isAuthorOrContributor && !isOwnProfile) {
+      this.transitionTo('settings.staff.user', currentUser);
+    } else if (isEditor && !isOwnProfile && !user.isAuthorOrContributor) {
+      this.transitionTo('settings.staff');
     }
 
-    afterModel(user) {
-        super.afterModel(...arguments);
+    if (isOwnProfile) {
+      this.store.queryRecord('api-key', { id: 'me' }).then((apiKey) => {
+        this.controller.personalToken = apiKey.id + ':' + apiKey.secret;
+        this.controller.personalTokenRegenerated = false;
+      });
+    }
+  }
 
-        const currentUser = this.session.user;
+  serialize(model) {
+    return { user_slug: model.get('slug') };
+  }
 
-        let isOwnProfile = user.id === currentUser.id;
-        let isAuthorOrContributor = currentUser.isAuthorOrContributor;
-        let isEditor = currentUser.isEditor;
+  setupController(controller, model) {
+    controller.model = model;
+    controller.reset();
+  }
 
-        if (isAuthorOrContributor && !isOwnProfile) {
-            this.transitionTo('settings.staff.user', currentUser);
-        } else if (isEditor && !isOwnProfile && !user.isAuthorOrContributor) {
-            this.transitionTo('settings.staff');
-        }
-
-        if (isOwnProfile) {
-            this.store.queryRecord('api-key', {id: 'me'}).then((apiKey) => {
-                this.controller.personalToken = apiKey.id + ':' + apiKey.secret;
-                this.controller.personalTokenRegenerated = false;
-            });
-        }
+  @action
+  async willTransition(transition) {
+    if (this.hasConfirmed) {
+      return true;
     }
 
-    serialize(model) {
-        return {user_slug: model.get('slug')};
+    transition.abort();
+
+    // wait for any existing confirm modal to be closed before allowing transition
+    if (this.confirmModal) {
+      return;
     }
 
-    setupController(controller, model) {
-        controller.model = model;
-        controller.reset();
+    if (this.controller.saveTask?.isRunning) {
+      await this.controller.saveTask.last;
     }
 
-    @action
-    async willTransition(transition) {
-        if (this.hasConfirmed) {
-            return true;
-        }
+    const shouldLeave = await this.confirmUnsavedChanges();
 
-        transition.abort();
+    if (shouldLeave) {
+      this.controller.reset();
+      this.hasConfirmed = true;
+      return transition.retry();
+    }
+  }
 
-        // wait for any existing confirm modal to be closed before allowing transition
-        if (this.confirmModal) {
-            return;
-        }
+  async confirmUnsavedChanges() {
+    if (
+      this.controller.model.hasDirtyAttributes ||
+      this.controller.dirtyAttributes
+    ) {
+      this.confirmModal = this.modals
+        .open(ConfirmUnsavedChangesModal)
+        .finally(() => {
+          this.confirmModal = null;
+        });
 
-        if (this.controller.saveTask?.isRunning) {
-            await this.controller.saveTask.last;
-        }
-
-        const shouldLeave = await this.confirmUnsavedChanges();
-
-        if (shouldLeave) {
-            this.controller.reset();
-            this.hasConfirmed = true;
-            return transition.retry();
-        }
+      return this.confirmModal;
     }
 
-    async confirmUnsavedChanges() {
-        if (this.controller.model.hasDirtyAttributes || this.controller.dirtyAttributes) {
-            this.confirmModal = this.modals
-                .open(ConfirmUnsavedChangesModal)
-                .finally(() => {
-                    this.confirmModal = null;
-                });
+    return true;
+  }
 
-            return this.confirmModal;
-        }
+  deactivate() {
+    this.confirmModal = null;
+    this.hasConfirmed = false;
+    this.controller.reset();
+  }
 
-        return true;
-    }
+  @action
+  didTransition() {
+    this.modelFor('settings.staff.user').get('errors').clear();
+  }
 
-    deactivate() {
-        this.confirmModal = null;
-        this.hasConfirmed = false;
-        this.controller.reset();
-    }
-
-    @action
-    didTransition() {
-        this.modelFor('settings.staff.user').get('errors').clear();
-    }
-
-    buildRouteInfoMetadata() {
-        return {
-            titleToken: 'Staff - User'
-        };
-    }
+  buildRouteInfoMetadata() {
+    return {
+      titleToken: 'Staff - User',
+    };
+  }
 }

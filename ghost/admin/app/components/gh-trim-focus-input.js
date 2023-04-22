@@ -9,26 +9,26 @@ import classic from 'ember-classic-decorator';
  */
 @classic
 class TrimFocusInputComponent extends GhostTextInput {
-    shouldFocus = true;
+  shouldFocus = true;
 
-    focusOut(event) {
-        this._trimInput(event.target.value, event);
-        super.focusOut(...arguments);
+  focusOut(event) {
+    this._trimInput(event.target.value, event);
+    super.focusOut(...arguments);
+  }
+
+  _trimInput(value, event) {
+    if (value && typeof value.trim === 'function') {
+      value = value.trim();
     }
 
-    _trimInput(value, event) {
-        if (value && typeof value.trim === 'function') {
-            value = value.trim();
-        }
+    this.element.value = value;
+    this._elementValueDidChange(event);
 
-        this.element.value = value;
-        this._elementValueDidChange(event);
-
-        let inputMethod = this.input;
-        if (inputMethod) {
-            inputMethod(event);
-        }
+    let inputMethod = this.input;
+    if (inputMethod) {
+      inputMethod(event);
     }
+  }
 }
 
 export default TrimFocusInputComponent;

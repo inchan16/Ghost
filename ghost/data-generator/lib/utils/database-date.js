@@ -1,3 +1,3 @@
 module.exports = function dateToDatabaseString(date) {
-    return date.toISOString().replace('Z','').replace('T', ' ');
+  return date.toISOString().replace('Z', '').replace('T', ' ');
 };

@@ -1,9 +1,16 @@
-const {EmailDeliveredEvent, EmailOpenedEvent, EmailBouncedEvent, SpamComplaintEvent, EmailUnsubscribedEvent, EmailTemporaryBouncedEvent} = require('@tryghost/email-events');
+const {
+  EmailDeliveredEvent,
+  EmailOpenedEvent,
+  EmailBouncedEvent,
+  SpamComplaintEvent,
+  EmailUnsubscribedEvent,
+  EmailTemporaryBouncedEvent,
+} = require('@tryghost/email-events');
 
 async function waitForEvent() {
-    return new Promise((resolve) => {
-        setTimeout(resolve, 70);
-    });
+  return new Promise((resolve) => {
+    setTimeout(resolve, 70);
+  });
 }
 
 /**
@@ -34,203 +41,209 @@ async function waitForEvent() {
  * WARNING: this class is used in a separate thread (an offloaded job). Be careful when working with settings and models.
  */
 class EmailEventProcessor {
-    #domainEvents;
-    #db;
-    #eventStorage;
+  #domainEvents;
+  #db;
+  #eventStorage;
 
-    constructor({domainEvents, db, eventStorage}) {
-        this.#domainEvents = domainEvents;
-        this.#db = db;
-        this.#eventStorage = eventStorage;
+  constructor({ domainEvents, db, eventStorage }) {
+    this.#domainEvents = domainEvents;
+    this.#db = db;
+    this.#eventStorage = eventStorage;
 
-        // Avoid having to query email_batch by provider_id for every event
-        this.providerIdEmailIdMap = {};
+    // Avoid having to query email_batch by provider_id for every event
+    this.providerIdEmailIdMap = {};
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {Date} timestamp
+   */
+  async handleDelivered(emailIdentification, timestamp) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = EmailDeliveredEvent.create({
+        email: emailIdentification.email,
+        emailRecipientId: recipient.emailRecipientId,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        timestamp,
+      });
+      await this.#eventStorage.handleDelivered(event);
+
+      this.#domainEvents.dispatch(event);
+    }
+    return recipient;
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {Date} timestamp
+   */
+  async handleOpened(emailIdentification, timestamp) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = EmailOpenedEvent.create({
+        email: emailIdentification.email,
+        emailRecipientId: recipient.emailRecipientId,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        timestamp,
+      });
+      this.#domainEvents.dispatch(event);
+      await this.#eventStorage.handleOpened(event);
+    }
+    return recipient;
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {{id: string, timestamp: Date, error: {code: number; message: string; enhandedCode: string|number} | null}} event
+   */
+  async handleTemporaryFailed(emailIdentification, { timestamp, error, id }) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = EmailTemporaryBouncedEvent.create({
+        id,
+        error,
+        email: emailIdentification.email,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        emailRecipientId: recipient.emailRecipientId,
+        timestamp,
+      });
+      await this.#eventStorage.handleTemporaryFailed(event);
+
+      this.#domainEvents.dispatch(event);
+    }
+    return recipient;
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {{id: string, timestamp: Date, error: {code: number; message: string; enhandedCode: string|number} | null}} event
+   */
+  async handlePermanentFailed(emailIdentification, { timestamp, error, id }) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = EmailBouncedEvent.create({
+        id,
+        error,
+        email: emailIdentification.email,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        emailRecipientId: recipient.emailRecipientId,
+        timestamp,
+      });
+      await this.#eventStorage.handlePermanentFailed(event);
+
+      this.#domainEvents.dispatch(event);
+      await waitForEvent(); // Avoids knex connection pool to run dry
+    }
+    return recipient;
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {Date} timestamp
+   */
+  async handleUnsubscribed(emailIdentification, timestamp) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = EmailUnsubscribedEvent.create({
+        email: emailIdentification.email,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        timestamp,
+      });
+      await this.#eventStorage.handleUnsubscribed(event);
+
+      this.#domainEvents.dispatch(event);
+    }
+    return recipient;
+  }
+
+  /**
+   * @param {EmailIdentification} emailIdentification
+   * @param {Date} timestamp
+   */
+  async handleComplained(emailIdentification, timestamp) {
+    const recipient = await this.getRecipient(emailIdentification);
+    if (recipient) {
+      const event = SpamComplaintEvent.create({
+        email: emailIdentification.email,
+        memberId: recipient.memberId,
+        emailId: recipient.emailId,
+        timestamp,
+      });
+      await this.#eventStorage.handleComplained(event);
+
+      this.#domainEvents.dispatch(event);
+      await waitForEvent(); // Avoids knex connection pool to run dry
+    }
+    return recipient;
+  }
+
+  /**
+   * @private
+   * @param {EmailIdentification} emailIdentification
+   * @returns {Promise<EmailRecipientInformation|undefined>}
+   */
+  async getRecipient(emailIdentification) {
+    if (!emailIdentification.emailId && !emailIdentification.providerId) {
+      // Protection if both are null or undefined
+      return;
     }
 
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {Date} timestamp
-     */
-    async handleDelivered(emailIdentification, timestamp) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = EmailDeliveredEvent.create({
-                email: emailIdentification.email,
-                emailRecipientId: recipient.emailRecipientId,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                timestamp
-            });
-            await this.#eventStorage.handleDelivered(event);
-
-            this.#domainEvents.dispatch(event);
-        }
-        return recipient;
+    // With the provider_id and email address we can look for the EmailRecipient
+    const emailId =
+      emailIdentification.emailId ??
+      (await this.getEmailId(emailIdentification.providerId));
+    if (!emailId) {
+      // Invalid
+      return;
     }
 
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {Date} timestamp
-     */
-    async handleOpened(emailIdentification, timestamp) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = EmailOpenedEvent.create({
-                email: emailIdentification.email,
-                emailRecipientId: recipient.emailRecipientId,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                timestamp
-            });
-            this.#domainEvents.dispatch(event);
-            await this.#eventStorage.handleOpened(event);
-        }
-        return recipient;
+    const { id: emailRecipientId, member_id: memberId } =
+      (await this.#db
+        .knex('email_recipients')
+        .select('id', 'member_id')
+        .where('member_email', emailIdentification.email)
+        .where('email_id', emailId)
+        .first()) || {};
+
+    if (emailRecipientId && memberId) {
+      return {
+        emailRecipientId,
+        memberId,
+        emailId,
+      };
+    }
+  }
+
+  /**
+   * @private
+   * @param {string} providerId
+   * @returns {Promise<string|undefined>}
+   */
+  async getEmailId(providerId) {
+    if (this.providerIdEmailIdMap[providerId]) {
+      return this.providerIdEmailIdMap[providerId];
     }
 
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {{id: string, timestamp: Date, error: {code: number; message: string; enhandedCode: string|number} | null}} event
-     */
-    async handleTemporaryFailed(emailIdentification, {timestamp, error, id}) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = EmailTemporaryBouncedEvent.create({
-                id,
-                error,
-                email: emailIdentification.email,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                emailRecipientId: recipient.emailRecipientId,
-                timestamp
-            });
-            await this.#eventStorage.handleTemporaryFailed(event);
+    const { emailId } =
+      (await this.#db
+        .knex('email_batches')
+        .select('email_id as emailId')
+        .where('provider_id', providerId)
+        .first()) || {};
 
-            this.#domainEvents.dispatch(event);
-        }
-        return recipient;
+    if (!emailId) {
+      return;
     }
 
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {{id: string, timestamp: Date, error: {code: number; message: string; enhandedCode: string|number} | null}} event
-     */
-    async handlePermanentFailed(emailIdentification, {timestamp, error, id}) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = EmailBouncedEvent.create({
-                id,
-                error,
-                email: emailIdentification.email,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                emailRecipientId: recipient.emailRecipientId,
-                timestamp
-            });
-            await this.#eventStorage.handlePermanentFailed(event);
-
-            this.#domainEvents.dispatch(event);
-            await waitForEvent(); // Avoids knex connection pool to run dry
-        }
-        return recipient;
-    }
-
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {Date} timestamp
-     */
-    async handleUnsubscribed(emailIdentification, timestamp) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = EmailUnsubscribedEvent.create({
-                email: emailIdentification.email,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                timestamp
-            });
-            await this.#eventStorage.handleUnsubscribed(event);
-
-            this.#domainEvents.dispatch(event);
-        }
-        return recipient;
-    }
-
-    /**
-     * @param {EmailIdentification} emailIdentification
-     * @param {Date} timestamp
-     */
-    async handleComplained(emailIdentification, timestamp) {
-        const recipient = await this.getRecipient(emailIdentification);
-        if (recipient) {
-            const event = SpamComplaintEvent.create({
-                email: emailIdentification.email,
-                memberId: recipient.memberId,
-                emailId: recipient.emailId,
-                timestamp
-            });
-            await this.#eventStorage.handleComplained(event);
-
-            this.#domainEvents.dispatch(event);
-            await waitForEvent(); // Avoids knex connection pool to run dry
-        }
-        return recipient;
-    }
-
-    /**
-     * @private
-     * @param {EmailIdentification} emailIdentification
-     * @returns {Promise<EmailRecipientInformation|undefined>}
-     */
-    async getRecipient(emailIdentification) {
-        if (!emailIdentification.emailId && !emailIdentification.providerId) {
-            // Protection if both are null or undefined
-            return;
-        }
-
-        // With the provider_id and email address we can look for the EmailRecipient
-        const emailId = emailIdentification.emailId ?? await this.getEmailId(emailIdentification.providerId);
-        if (!emailId) {
-            // Invalid
-            return;
-        }
-
-        const {id: emailRecipientId, member_id: memberId} = await this.#db.knex('email_recipients')
-            .select('id', 'member_id')
-            .where('member_email', emailIdentification.email)
-            .where('email_id', emailId)
-            .first() || {};
-
-        if (emailRecipientId && memberId) {
-            return {
-                emailRecipientId,
-                memberId,
-                emailId
-            };
-        }
-    }
-
-    /**
-     * @private
-     * @param {string} providerId
-     * @returns {Promise<string|undefined>}
-     */
-    async getEmailId(providerId) {
-        if (this.providerIdEmailIdMap[providerId]) {
-            return this.providerIdEmailIdMap[providerId];
-        }
-
-        const {emailId} = await this.#db.knex('email_batches')
-            .select('email_id as emailId')
-            .where('provider_id', providerId)
-            .first() || {};
-
-        if (!emailId) {
-            return;
-        }
-
-        this.providerIdEmailIdMap[providerId] = emailId;
-        return emailId;
-    }
+    this.providerIdEmailIdMap[providerId] = emailId;
+    return emailId;
+  }
 }
 
 module.exports = EmailEventProcessor;

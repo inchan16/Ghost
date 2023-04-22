@@ -6,21 +6,21 @@ const jwt = require('jsonwebtoken');
  * @param {string} header
  */
 const extractTokenFromHeader = (header) => {
-    const [scheme, token] = header.split(' ');
+  const [scheme, token] = header.split(' ');
 
-    if (/^Ghost$/i.test(scheme)) {
-        return token;
-    }
+  if (/^Ghost$/i.test(scheme)) {
+    return token;
+  }
 };
 
 const extractAdminAPIKey = (token) => {
-    const decoded = jwt.decode(token, {complete: true});
+  const decoded = jwt.decode(token, { complete: true });
 
-    if (!decoded || !decoded.header || !decoded.header.kid) {
-        return null;
-    }
+  if (!decoded || !decoded.header || !decoded.header.kid) {
+    return null;
+  }
 
-    return decoded.header.kid;
+  return decoded.header.kid;
 };
 
 /**
@@ -37,21 +37,23 @@ const extractAdminAPIKey = (token) => {
  * @returns {ApiKey}
  */
 const extractAPIKey = (req) => {
-    let keyValue = null;
-    let keyType = null;
+  let keyValue = null;
+  let keyType = null;
 
-    if (req.query && req.query.key) {
-        keyValue = req.query.key;
-        keyType = 'content';
-    } else if (req.headers && req.headers.authorization) {
-        keyValue = extractAdminAPIKey(extractTokenFromHeader(req.headers.authorization));
-        keyType = 'admin';
-    }
+  if (req.query && req.query.key) {
+    keyValue = req.query.key;
+    keyType = 'content';
+  } else if (req.headers && req.headers.authorization) {
+    keyValue = extractAdminAPIKey(
+      extractTokenFromHeader(req.headers.authorization)
+    );
+    keyType = 'admin';
+  }
 
-    return {
-        key: keyValue,
-        type: keyType
-    };
+  return {
+    key: keyValue,
+    type: keyType,
+  };
 };
 
 module.exports = extractAPIKey;
