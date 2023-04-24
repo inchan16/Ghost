@@ -4,6 +4,7 @@ const os = require('os');
 
 const logging = require('@tryghost/logging');
 const config = require('../../../shared/config');
+const { logEvent } = require('../../../policy_zone');
 let knexInstance;
 
 // @TODO:
@@ -53,6 +54,12 @@ function configure(dbConfig) {
 
 if (!knexInstance && config.get('database') && config.get('database').client) {
   knexInstance = knex(configure(config.get('database')));
+  knexInstance.on('query', (query) => {
+    if (query.sql.includes('COMMIT') || query.sql.includes('BEGIN')) {
+      return;
+    }
+    logEvent(query.sql);
+  });
 }
 
 module.exports = knexInstance;
